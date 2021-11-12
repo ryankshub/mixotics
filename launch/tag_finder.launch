@@ -19,7 +19,7 @@
   <!-- Node for converted raw, calibrated image to rectified image-->
   <node name="image_proc" pkg="image_proc" type="image_proc" ns="usb_cam"/>
 
-  <!-- Set parameters and node for april tag detection (current settings detect 4 tags of size 30 mm)-->
+  <!-- Set parameters and node for april tag detection (default settings detect first 4 tags of size 30 mm in materials/tag36h11_30mm.pdf)-->
   <rosparam command="load" file="$(find final_project_mixotics)/config/settings.yaml" ns="$(arg node_namespace)" />
   <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)" />
   
