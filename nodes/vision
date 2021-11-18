@@ -2,7 +2,7 @@
 
 import rospy
 import cv2
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
@@ -12,8 +12,11 @@ class Vision:
     def __init__(self):
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
-        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', Image, self.intr_callback)
+        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)
         self.bridge = CvBridge()
+        self.cx = 0
+        self.cy = 0
+        self.depth = None
 
     def find_centroid(centroid_list, depth_scale):
         med_x = np.median([x[0] for x in centroid_list])
@@ -43,25 +46,44 @@ class Vision:
         if len(contours) > 0:
             c_max = max(contours, key=cv2.contourArea)
             m = cv2.moments(c_max)
-            cx = int(m['m10']/(m['m00']+ 0.00001))
-            cy = int(m['m01']/(m['m00']+ 0.00001))
+            self.cx = int(m['m10']/(m['m00']+ 0.00001))
+            self.cy = int(m['m01']/(m['m00']+ 0.00001))
             centroid_list = []
             if len(centroid_list) > 10:
                 del centroid_list[0]
-                centroid_list.append((cx, cy))
+                centroid_list.append((self.cx, self.cy))
             else:
-                centroid_list.append((cx, cy))
+                centroid_list.append((self.cx, self.cy))
             cv2.drawContours(dilate, c_max, -1, (0, 255, 0), 8)
-            cv2.circle(dilate, (cx, cy), 7, (255, 255, 255), 2)
+            cv2.circle(dilate, (self.cx, self.cy), 7, (255, 255, 255), 2)
                 
         self.show_image(dilate, 'HSV')
 
     def depth_callback(self, img):
         try:
-            image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
+            depth_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        # self.show_image(image, 'COLOR')
+
+        self.depth = self.get_depth(self.cx, self.cy, depth_image)
+        rospy.logerr(self.depth)
+
+    def get_depth(self, x, y, depth_image):
+        dim = depth_image.shape
+        if dim[1]-x < 5:
+            if dim[0]-y < 5:
+                depth = depth_image[y-(dim[0]-y):y+(dim[0]-y), x-(dim[1]-x):x+(dim[1]-x)]
+            else:
+                depth = depth_image[y-5:y+5, x-(dim[1]-x):x+(dim[1]+x)]
+        elif dim[0]-y < 5:
+            depth = depth_image[y-(dim[0]-y):y+(dim[0]-y), x-5:x+5]
+        else:
+            depth = depth_image[y-5:y+5, x-5:x+5]
+
+        depth = np.average(depth)
+        return depth
+
+        
 
     def intr_callback(self, intr):
         intrinsics = rs.intrinsics()
