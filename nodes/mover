@@ -4,3 +4,25 @@ import rospy
 import actionlib
 import actionlib_tutorials.msg
 
+import moveit_commander
+from moveit_msgs.msg import MoveItErrorCodes
+from moveit_commander.conversions import pose_to_list
+
+class mover():
+    ''' 
+    The mover class takes care of being able to grasp the ingrdients neccesary for the drink, getting them to the pouring station, and returning them.
+    '''
+    def __init__(self):
+
+        scene = moveit_commander.PlanningSceneInterface()
+
+        group_name = "panda_arm"
+
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        self.move_gripper = moveit_commander.MoveGroupCommander('interbotix_gripper')
+
+
+if __name__ == "__main__":
+        rospy.init_node("mover") #Initialize the node
+        Mover = mover()
+        rospy.spin() #Keep running 
