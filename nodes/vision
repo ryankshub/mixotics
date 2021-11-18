@@ -5,12 +5,14 @@ import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
+import pyrealsense2 as rs
 
 class Vision:
     
     def __init__(self):
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
+        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', Image, self.intr_callback)
         self.bridge = CvBridge()
 
     def find_centroid(centroid_list, depth_scale):
@@ -51,7 +53,7 @@ class Vision:
                 centroid_list.append((cx, cy))
             cv2.drawContours(dilate, c_max, -1, (0, 255, 0), 8)
             cv2.circle(dilate, (cx, cy), 7, (255, 255, 255), 2)
-        
+                
         self.show_image(dilate, 'HSV')
 
     def depth_callback(self, img):
@@ -60,6 +62,20 @@ class Vision:
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
         # self.show_image(image, 'COLOR')
+
+    def intr_callback(self, intr):
+        intrinsics = rs.intrinsics()
+        intrinsics.width = intr.width
+        intrinsics.height = intr.height
+        intrinsics.ppx = intr.K[2]
+        intrinsics.ppy = intr.K[5]
+        intrinsics.fx = intr.K[0]
+        intrinsics.fy = intr.K[4]
+        intrinsics.model = rs.distortion.none
+        intrinsics.coeffs = [i for i in intr.D]
+        return intrinsics
+
+        
         
     def show_image(self, img, img_name):
         cv2.namedWindow(img_name, 1)
