@@ -17,6 +17,7 @@ class Vision:
         self.cx = 0
         self.cy = 0
         self.depth = None
+        self.intrinsics = None
 
     def find_centroid(centroid_list, depth_scale):
         med_x = np.median([x[0] for x in centroid_list])
@@ -56,6 +57,13 @@ class Vision:
                 centroid_list.append((self.cx, self.cy))
             cv2.drawContours(dilate, c_max, -1, (0, 255, 0), 8)
             cv2.circle(dilate, (self.cx, self.cy), 7, (255, 255, 255), 2)
+
+            point = rs.rs2_deproject_pixel_to_point(self.intrinsics, [self.cx, self.cy], self.depth)
+
+            # position of centroid in real world wrt camera
+            # [x, y, z], with z being depth
+            pos = [-point[0], -point[1], point[2]]
+            rospy.logerr(pos)
                 
         self.show_image(dilate, 'HSV')
 
@@ -66,7 +74,6 @@ class Vision:
             rospy.logerr('CvBridge Error: {0}'.format(e))
 
         self.depth = self.get_depth(self.cx, self.cy, depth_image)
-        rospy.logerr(self.depth)
 
     def get_depth(self, x, y, depth_image):
         dim = depth_image.shape
@@ -83,8 +90,6 @@ class Vision:
         depth = np.average(depth)
         return depth
 
-        
-
     def intr_callback(self, intr):
         intrinsics = rs.intrinsics()
         intrinsics.width = intr.width
@@ -95,7 +100,7 @@ class Vision:
         intrinsics.fy = intr.K[4]
         intrinsics.model = rs.distortion.none
         intrinsics.coeffs = [i for i in intr.D]
-        return intrinsics
+        self.intrinsics = intrinsics
 
         
         
