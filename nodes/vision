@@ -4,19 +4,37 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+import numpy as np
 
 class Vision:
     
     def __init__(self):
-        self.sub_img = rospy.Subscriber('/camera/color/image_raw', Image, self.img_callback)
+        self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
+        self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
         self.bridge = CvBridge()
 
-    def img_callback(self, img):
+    def color_callback(self, img):
+        try:
+            color_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
+            hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
+        except CvBridgeError as e:
+            rospy.logerr('CvBridge Error: {0}'.format(e))
+
+        l_blue = np.array([15, 235, 20])
+        u_blue = np.array([35, 255, 255])
+
+        mask = cv2.inRange(hsv_image, l_blue, u_blue)
+
+        res = cv2.bitwise_and(color_image, color_image, mask=mask)
+        
+        self.show_image(res)
+
+    def depth_callback(self, img):
         try:
             image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        self.show_image(image)
+        # self.show_image(image)
         
     def show_image(self, img):
         cv2.namedWindow('Image Window', 1)
