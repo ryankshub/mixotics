@@ -20,25 +20,29 @@ class Vision:
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
 
-        l_blue = np.array([15, 235, 20])
+        l_blue = np.array([15, 225, 20])
         u_blue = np.array([35, 255, 255])
 
         mask = cv2.inRange(hsv_image, l_blue, u_blue)
 
         res = cv2.bitwise_and(color_image, color_image, mask=mask)
+
+        kernel = np.ones((5, 5), np.uint8)
+        erode = cv2.erode(res, kernel, iterations = 1)
+        dilate = cv2.dilate(erode, kernel, iterations = 1)
         
-        self.show_image(res)
+        self.show_image(dilate, 'HSV')
 
     def depth_callback(self, img):
         try:
             image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        # self.show_image(image)
+        # self.show_image(image, 'COLOR')
         
-    def show_image(self, img):
-        cv2.namedWindow('Image Window', 1)
-        cv2.imshow('Image Window', img)
+    def show_image(self, img, img_name):
+        cv2.namedWindow(img_name, 1)
+        cv2.imshow(img_name, img)
         cv2.waitKey(3)
 
 def main():
