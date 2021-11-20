@@ -32,7 +32,7 @@
   <author email="ryanking-shepard@u.northwestern.edu">RKS</author>
   <author email="M@todo.todo">Marshall Johnson</author>
   <author email="matthewshort2025@u.northwestern.edu">Matt Short</author>
-  <author email="E@todo.todo">Eric Codrea</author>
+  <author email="EricCodrea2022@u.northwestern.edu">Eric Codrea</author>
   <author email="kaarthikpranav97@gmail.com">Pranav Kaarthik</author>
 
 
@@ -58,8 +58,16 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>moveit_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>moveit_msgs</build_export_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
