@@ -62,6 +62,7 @@ class Vision:
 
             # position of centroid in real world wrt camera
             # [x, y, z], with z being depth
+            # from camera's perspective, left is +, up is +, 
             pos = [-point[0], -point[1], point[2]]
             rospy.logerr(pos)
                 
