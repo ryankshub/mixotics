@@ -3,6 +3,7 @@
 import rospy
 import cv2
 from sensor_msgs.msg import Image, CameraInfo
+from geometry_msgs.msg import TransformStamped
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
@@ -15,14 +16,17 @@ class Vision:
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
         self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)
-        self.broadcaster = tf2_ros.TransformBroadcaster('')
+        self.camera_broadcaster = tf2_ros.TransformBroadcaster()
+        self.bottle_broadcaster = tf2_ros.TransformBroadcaster()
         self.bridge = CvBridge()
         self.cx = 0
         self.cy = 0
         self.depth = None
         self.intrinsics = None
+        self.color_img = None
+        self.bottle_pos = None
 
-    def color_callback(self, img):
+    def process_color(self, img):
         try:
             color_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
@@ -58,14 +62,22 @@ class Vision:
 
             point = rs.rs2_deproject_pixel_to_point(self.intrinsics, [self.cx, self.cy], self.depth)
 
-            # position of centroid in real world wrt camera
-            # [x, y, z], with z being depth
-            # from camera's perspective, left is +, up is +, 
-            pos = [-point[0], -point[1], point[2]]
-            rospy.logerr(pos)
+            self.bottle_pos = point
+
+            # # position of centroid in real world wrt camera
+            # # [x, y, z], with z being depth
+            # # from camera's perspective, left is +, up is +, 
+            # pos = [-point[0], -point[1], point[2]]
+            # rospy.logerr(pos)
                 
         self.show_image(dilate, 'HSV')
 
+    def broadcast(self):
+        return
+
+    def color_callback(self, img):
+        self.color_image = img
+        
     def depth_callback(self, img):
         try:
             depth_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
