@@ -1,0 +1,27 @@
+#! /usr/bin/env python
+
+import rospy
+import  actionlib
+import actionlib_msgs
+
+import moveit_commander
+import moveit_msgs
+import moveit
+
+from moveit_msgs import MoveErrorCode
+
+class gripper():
+    """
+    The gripper class looks at fine control of the gripper - i.e. it pours the drink, shakes the drink cup 
+    """
+
+    def __init__(self):
+
+
+
+
+    if __name__ == "__main__":
+        rospy.init_node("mgripper) #Initialize the node
+        gripper = gripper()
+        rospy.spin() #Keep running 
+        pass
