@@ -6,6 +6,8 @@ from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
+import tf2_ros
+
 
 class Vision:
     
@@ -13,16 +15,12 @@ class Vision:
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
         self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)
+        self.broadcaster = tf2_ros.TransformBroadcaster('')
         self.bridge = CvBridge()
         self.cx = 0
         self.cy = 0
         self.depth = None
         self.intrinsics = None
-
-    def find_centroid(centroid_list, depth_scale):
-        med_x = np.median([x[0] for x in centroid_list])
-        med_y = np.median([y[1] for y in centroid_list])
-        return (med_x*depth_scale, med_y*depth_scale)
 
     def color_callback(self, img):
         try:
