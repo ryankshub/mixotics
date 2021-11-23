@@ -19,11 +19,11 @@ class Vision:
         self.camera_broadcaster = tf2_ros.TransformBroadcaster()
         self.bottle_broadcaster = tf2_ros.TransformBroadcaster()
         self.bridge = CvBridge()
-        self.depth = None
         self.intrinsics = None
-        self.color_img = None
+        self.color_image = None
         self.depth_image = None
-        self.bottle_pos = None
+        self.r = rospy.Rate(100)
+
 
     def get_depth(self, x, y, depth_image):
         dim = depth_image.shape
@@ -41,7 +41,10 @@ class Vision:
         return depth        
 
     def get_position(self, color_image, depth_image, intrinsics):
-        hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
+        try:
+            hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
+        except:
+            return False
 
         l_blue = np.array([15, 225, 20])
         u_blue = np.array([35, 255, 255])
@@ -74,18 +77,40 @@ class Vision:
 
             point = rs.rs2_deproject_pixel_to_point(intrinsics, [cx, cy], depth)
 
-            self.bottle_pos = point
+            bottle_pos = [p/1000 for p in point]
+            self.show_image(dilate, 'HSV')
+            return bottle_pos
+        
+        else:
+            self.show_image(dilate, 'HSV')
+            return False
 
             # # position of centroid in real world wrt camera
             # # [x, y, z], with z being depth
             # # from camera's perspective, left is +, up is +, 
             # pos = [-point[0], -point[1], point[2]]
             # rospy.logerr(pos)
-                
-        self.show_image(dilate, 'HSV')
 
-    def broadcast(self):
-        return
+    def broadcast(self, xyz):
+        camera_bottle_tf = TransformStamped()
+
+        # generate transform
+        camera_bottle_tf.header.stamp = rospy.Time.now()
+        camera_bottle_tf.header.frame_id = 'bottle_frame'
+        camera_bottle_tf.child_frame_id = 'camera_color_optical_frame'
+
+        # adjust to center
+        camera_bottle_tf.transform.translation.x = xyz[0]
+        camera_bottle_tf.transform.translation.y = xyz[1]
+        camera_bottle_tf.transform.translation.z = xyz[2]
+
+        # use quaternion values
+        camera_bottle_tf.transform.rotation.x = 0
+        camera_bottle_tf.transform.rotation.y = 0
+        camera_bottle_tf.transform.rotation.z = 0
+        camera_bottle_tf.transform.rotation.w = 1
+
+        self.bottle_broadcaster.sendTransform(camera_bottle_tf)
 
     def color_callback(self, img):
         try:
@@ -112,8 +137,6 @@ class Vision:
         intrinsics.model = rs.distortion.none
         intrinsics.coeffs = [i for i in intr.D]
         self.intrinsics = intrinsics
-
-        
         
     def show_image(self, img, img_name):
         cv2.namedWindow(img_name, 1)
@@ -124,7 +147,13 @@ def main():
     """ The main() function. """
     rospy.init_node('vision')
     v = Vision()
-    rospy.spin()
+    while not rospy.is_shutdown():
+        pos = v.get_position(v.color_image, v.depth_image, v.intrinsics)
+        if pos != False:
+            v.broadcast(pos)
+        else:
+            pass
+        v.r.sleep()
 
 if __name__ == '__main__':
     try:
