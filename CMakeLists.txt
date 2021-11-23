@@ -9,9 +9,11 @@ project(final_project_mixotics)
 ## is used, also find other catkin packages
 ## System dependencies are found with CMake's conventions
 find_package(catkin REQUIRED COMPONENTS
-    message_generation
-    rospy
-    std_msgs
+  rospy
+  message_generation
+  std_msgs
+  geometry_msgs
+  moveit_msgs
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -66,7 +68,9 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
+  std_msgs  # Or other packages containing msgs 
+  moveit_msgs
+  geometry_msgs 
 )
 
 ################################################
@@ -98,11 +102,12 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES arm_move
-  CATKIN_DEPENDS message_runtime std_msgs
-#  DEPENDS system_lib
+
+catkin_package(CATKIN_DEPENDS
+  std_msgs
+  geometry_msgs
+  message_runtime
+  moveit_msgs
 )
 
 ###########
@@ -158,6 +163,8 @@ include_directories(
 catkin_install_python(PROGRAMS
   nodes/update_scene
   nodes/fixed_tag
+  nodes/mover
+  nodes/mover2
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
