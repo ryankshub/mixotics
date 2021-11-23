@@ -12,6 +12,8 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 from moveit_msgs.msg import MoveItErrorCodes
 from moveit_commander.conversions import pose_to_list
+from math import pi
+from std_srvs.srv import Empty, EmptyResponse, SetBool, SetBoolResponse
 
 
 class gripper():
@@ -23,13 +25,16 @@ class gripper():
         self.scene = moveit_commander.PlanningSceneInterface()
         self.robot = moveit_commander.RobotCommander()
 
-        self.group_name = "hand"
-        self.group = moveit_commander.MoveGroupCommander(self.group_name)
-        display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
-
         self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
         self.move_gripper = moveit_commander.MoveGroupCommander('interbotix_gripper')
 
+        self.group_name = "hand"
+        self.group = moveit_commander.MoveGroupCommander(self.group_name)
+        display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        
+        self.moveit_gripper_open()
+
+    def gripper_home(self):
         self.client = actionlib.SimpleActionClient('/franka_gripper/homing', HomingAction)
         self.client.wait_for_server()
 
@@ -37,7 +42,9 @@ class gripper():
         self.client.send_goal(self.goal)
         self.client.wait_for_result(rospy.Duration.from_sec(5.0))
 
-        self.moveit_gripper_open()
+        return EmptyResponse()
+
+
 
     def gripper_move(self,data):
         self.client = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
@@ -46,6 +53,9 @@ class gripper():
         self.client.send_goal(self.goal)
         self.client.wait_for_result(rospy.Duration.from_sec(5.0))
 
+        return EmptyResponse()
+
+
     def moveit_gripper_open(self):
         joint_goal = self.group.get_current_joint_values()
         joint_goal[0] = 0.03
@@ -53,12 +63,29 @@ class gripper():
         self.group.go(joint_goal, wait=True)
         self.group.stop()
 
+        return EmptyResponse()
+
     def moveit_gripper_close(self,data):
         joint_goal = self.group.get_current_joint_values()
         joint_goal[0] = data[0]
         joint_goal[1] = data[1]
         self.group.go(joint_goal, wait=True)
         self.group.stop()
+
+        return EmptyResponse()
+
+    def moveit_pose(self,pose):
+        pose_goal = geometry_msgs.msg.Pose()
+        pose_goal.orientation.w = pose[0]
+        pose_goal.position.x = pose[1]
+        pose_goal.position.y = pose[2]
+        pose_goal.position.z = pose[3]
+        self.group.set_pose_target(pose_goal)
+        plan = self.group.go(wait=True)
+        self.group.stop()
+        self.group.clear_pose_targets()
+
+        return EmptyResponse()
 
 
 
