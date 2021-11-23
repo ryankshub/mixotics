@@ -7,6 +7,7 @@ project(final_project_mixotics)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+## System dependencies are found with CMake's conventions
 find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
@@ -14,10 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   moveit_msgs
 )
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -56,11 +53,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+   Refresh.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -106,6 +102,7 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
+
 catkin_package(CATKIN_DEPENDS
   std_msgs
   geometry_msgs
@@ -164,6 +161,8 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
+  nodes/update_scene
+  nodes/fixed_tag
   nodes/mover
   nodes/mover2
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

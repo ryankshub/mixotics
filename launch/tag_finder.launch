@@ -1,0 +1,48 @@
+<launch>
+  <!-- Detection and publishing of apriltag tf frames (adapted from apriltag_ros/launch/continuous_detection.launch) -->
+  <arg name="demo" default="false"/>
+  <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
+  <arg name="node_namespace" default="apriltag_ros_continuous_node" />
+  <arg name="camera_name" default="camera" />
+  <arg name="camera_frame" default="camera_link" />
+  <arg name="image_topic" default="image_rect" />
+  
+  <!-- Load list of ingredients -->
+  <rosparam command="load" file="$(find final_project_mixotics)/config/objects.yaml" />
+  <param name="camera_frame" value="$(arg camera_frame)"/>
+
+  <!-- Optional rviz visualization of tf frames -->
+  <group if="$(eval arg('demo') ==false)">
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find final_project_mixotics)/config/tags.rviz"/>
+  </group>
+
+  <!-- Optional demo with panda_moveit_config and update_scene node-->
+  <group if="$(eval arg('demo') ==true)">
+    <include file="$(find panda_moveit_config)/launch/demo.launch"/>
+    <!-- Nodes for identifying scene objects -->
+    <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
+    <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
+  </group>
+  
+  <!-- Launch RealSense camera -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="initial_reset" value="true"/>
+    <arg name="camera" default="$(arg camera_name)"/>
+  </include>
+
+  <!-- Node for converted raw, calibrated image to rectified image -->
+  <node name="image_proc" pkg="image_proc" type="image_proc" ns="$(arg camera_name)/color"/>
+
+  <!-- Set parameters and node for april tag detection (default settings detect first 4 tags of size 30 mm in materials/tag36h11_30mm.pdf) -->
+  <rosparam command="load" file="$(find final_project_mixotics)/config/settings.yaml" ns="$(arg node_namespace)" />
+  <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)" />
+  
+  <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
+    <!-- Remap topics from those used in code to those on the ROS network -->
+    <remap from="image_rect" to="/$(arg camera_name)/color/$(arg image_topic)" />
+    <remap from="camera_info" to="/$(arg camera_name)/color/camera_info" />
+
+    <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
+  </node>
+
+</launch>
