@@ -49,12 +49,11 @@ class Vision:
         # water = blue, sugar = green, lemon = yellow, 
         # coffee = orange, cup = red
         thresholds = {
-            'water': (np.array([75, 50, 20]), np.array([95, 255, 255])),
-            # 'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            # 'sugar': (np.array([40, 70, 20]), np.array([50, 255, 255]),
-            # 'lemon': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            # 'coffee': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            # 'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
+            'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
+            'sugar': (np.array([40, 70, 20]), np.array([50, 255, 255])),
+            'lemon': (np.array([75, 75, 20]), np.array([95, 255, 255])),
+            'coffee': (np.array([100, 75, 20]), np.array([120, 255, 255])),
+            'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
         }
 
         bottle_pos = {}
@@ -121,7 +120,7 @@ class Vision:
         camera_bottle_tf.transform.rotation.y = 0
         camera_bottle_tf.transform.rotation.z = 0
         camera_bottle_tf.transform.rotation.w = 1
-
+        
         self.bottle_broadcaster.sendTransform(camera_bottle_tf)
 
     def color_callback(self, img):
