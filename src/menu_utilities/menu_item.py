@@ -3,7 +3,7 @@
 #RKS
 
 # Project imports
-from enum_defs import InstrEnum, StoreRoomEnum
+from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
 # Python imports
 
 # 3rd party imports
@@ -50,6 +50,10 @@ class MenuItem:
         for instruction in self._recipe:
             if not isinstance(instruction[0], InstrEnum):
                 false_instructions.append(instruction)
+            if instruction[0] == InstrEnum.GRAB:
+                if instruction[1] not in self._ingredients:
+                    err_string = f"Ingredient {instruction[1]} is missing"
+                    raise RuntimeError(err_string)
         if len(false_instructions) != 0:
             err_string = f"Unknown instructions found: {false_instructions}"
             raise RuntimeError(err_string)
@@ -81,4 +85,4 @@ class MenuItem:
         """
         Get the recipe for the menu item
         """
-        return self._instructions.copy()
+        return self._recipe.copy()

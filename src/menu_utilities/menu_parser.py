@@ -3,8 +3,8 @@
 #RKS
 
 # Project imports
-from enum_defs import InstrEnum, StoreRoomEnum
-from menu_item import MenuItem
+from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
+from menu_utilities.menu_item import MenuItem
 
 # Python imports
 #NOTE: This should only be used with known menus 
