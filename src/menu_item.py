@@ -48,7 +48,7 @@ class MenuItem:
         ## Check instructions
         false_instructions = []
         for instruction in self._recipe:
-            if not isinstance(instruction, InstrEnum):
+            if not isinstance(instruction[0], InstrEnum):
                 false_instructions.append(instruction)
         if len(false_instructions) != 0:
             err_string = f"Unknown instructions found: {false_instructions}"
