@@ -46,57 +46,69 @@ class Vision:
         except:
             return False
 
-        l_blue = np.array([15, 225, 20])
-        u_blue = np.array([35, 255, 255])
+        # water = blue, sugar = green, lemon = yellow, 
+        # coffee = orange, cup = red
+        thresholds = {
+            'water': (np.array([75, 50, 20]), np.array([95, 255, 255])),
+            # 'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
+            # 'sugar': (np.array([40, 70, 20]), np.array([50, 255, 255]),
+            # 'lemon': (np.array([15, 225, 20]), np.array([35, 255, 255])),
+            # 'coffee': (np.array([15, 225, 20]), np.array([35, 255, 255])),
+            # 'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
+        }
 
-        mask = cv2.inRange(hsv_image, l_blue, u_blue)
+        bottle_pos = {}
+        for k, v in thresholds.items():
 
-        res = cv2.bitwise_and(color_image, color_image, mask=mask)
+            mask = cv2.inRange(hsv_image, v[0], v[1])
 
-        kernel = np.ones((5, 5), np.uint8)
-        erode = cv2.erode(res, kernel, iterations = 1)
-        dilate = cv2.dilate(erode, kernel, iterations = 1)
+            res = cv2.bitwise_and(color_image, color_image, mask=mask)
 
-        contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]
+            kernel = np.ones((5, 5), np.uint8)
+            erode = cv2.erode(res, kernel, iterations = 1)
+            dilate = cv2.dilate(erode, kernel, iterations = 1)
 
-        if len(contours) > 0:
-            c_max = max(contours, key=cv2.contourArea)
-            m = cv2.moments(c_max)
-            cx = int(m['m10']/(m['m00']+ 0.00001))
-            cy = int(m['m01']/(m['m00']+ 0.00001))
-            centroid_list = []
-            if len(centroid_list) > 10:
-                del centroid_list[0]
-                centroid_list.append((cx, cy))
+            contours = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]
+
+            if len(contours) > 0:
+                c_max = max(contours, key=cv2.contourArea)
+                m = cv2.moments(c_max)
+                cx = int(m['m10']/(m['m00']+ 0.00001))
+                cy = int(m['m01']/(m['m00']+ 0.00001))
+                centroid_list = []
+                if len(centroid_list) > 10:
+                    del centroid_list[0]
+                    centroid_list.append((cx, cy))
+                else:
+                    centroid_list.append((cx, cy))
+                cv2.drawContours(dilate, c_max, -1, (0, 255, 0), 8)
+                cv2.circle(dilate, (cx, cy), 7, (255, 255, 255), 2)
+
+                depth = self.get_depth(cx, cy, depth_image)
+
+                point = rs.rs2_deproject_pixel_to_point(intrinsics, [cx, cy], depth)
+
+                bottle_pos[k] = [p/1000 for p in point]
+                self.show_image(dilate, 'HSV')
+
+                return bottle_pos
+            
             else:
-                centroid_list.append((cx, cy))
-            cv2.drawContours(dilate, c_max, -1, (0, 255, 0), 8)
-            cv2.circle(dilate, (cx, cy), 7, (255, 255, 255), 2)
+                self.show_image(dilate, 'HSV')
+                return False
 
-            depth = self.get_depth(cx, cy, depth_image)
+                # # position of centroid in real world wrt camera
+                # # [x, y, z], with z being depth
+                # # from camera's perspective, left is +, up is +, 
+                # pos = [-point[0], -point[1], point[2]]
+                # rospy.logerr(pos)
 
-            point = rs.rs2_deproject_pixel_to_point(intrinsics, [cx, cy], depth)
-
-            bottle_pos = [p/1000 for p in point]
-            self.show_image(dilate, 'HSV')
-            return bottle_pos
-        
-        else:
-            self.show_image(dilate, 'HSV')
-            return False
-
-            # # position of centroid in real world wrt camera
-            # # [x, y, z], with z being depth
-            # # from camera's perspective, left is +, up is +, 
-            # pos = [-point[0], -point[1], point[2]]
-            # rospy.logerr(pos)
-
-    def broadcast(self, xyz):
+    def broadcast(self, xyz, name):
         camera_bottle_tf = TransformStamped()
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
-        camera_bottle_tf.header.frame_id = 'bottle_frame'
+        camera_bottle_tf.header.frame_id = f'{name}_frame'
         camera_bottle_tf.child_frame_id = 'camera_color_optical_frame'
 
         # adjust to center
@@ -148,9 +160,10 @@ def main():
     rospy.init_node('vision')
     v = Vision()
     while not rospy.is_shutdown():
-        pos = v.get_position(v.color_image, v.depth_image, v.intrinsics)
-        if pos != False:
-            v.broadcast(pos)
+        pos_dict = v.get_position(v.color_image, v.depth_image, v.intrinsics)
+        if pos_dict:
+            for k, val in pos_dict.items():
+                v.broadcast(val, k)
         else:
             pass
         v.r.sleep()
