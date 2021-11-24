@@ -15,9 +15,14 @@ class Vision:
     def __init__(self):
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
-        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)
-        self.camera_broadcaster = tf2_ros.TransformBroadcaster()
-        self.bottle_broadcaster = tf2_ros.TransformBroadcaster()
+        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)\
+
+        self.water_broadcaster = tf2_ros.TransformBroadcaster()
+        self.sugar_broadcaster = tf2_ros.TransformBroadcaster()
+        self.lemon_broadcaster = tf2_ros.TransformBroadcaster()
+        self.coffee_broadcaster = tf2_ros.TransformBroadcaster()
+        self.cup_broadcaster = tf2_ros.TransformBroadcaster()
+
         self.bridge = CvBridge()
         self.intrinsics = None
         self.color_image = None
@@ -90,11 +95,7 @@ class Vision:
                 bottle_pos[k] = [p/1000 for p in point]
                 self.show_image(dilate, 'HSV')
 
-                return bottle_pos
-            
-            else:
-                self.show_image(dilate, 'HSV')
-                return False
+        return bottle_pos
 
                 # # position of centroid in real world wrt camera
                 # # [x, y, z], with z being depth
@@ -120,8 +121,17 @@ class Vision:
         camera_bottle_tf.transform.rotation.y = 0
         camera_bottle_tf.transform.rotation.z = 0
         camera_bottle_tf.transform.rotation.w = 1
-        
-        self.bottle_broadcaster.sendTransform(camera_bottle_tf)
+        rospy.logerr(name)
+        if name == 'water':
+            self.water_broadcaster.sendTransform(camera_bottle_tf)
+        elif name == 'sugar':
+            self.sugar_broadcaster.sendTransform(camera_bottle_tf)
+        elif name == 'lemon':
+            self.lemon_broadcaster.sendTransform(camera_bottle_tf)
+        elif name == 'coffee':
+            self.coffee_broadcaster.sendTransform(camera_bottle_tf)
+        elif name == 'cup':
+            self.cup_broadcaster.sendTransform(camera_bottle_tf)
 
     def color_callback(self, img):
         try:
