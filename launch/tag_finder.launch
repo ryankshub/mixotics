@@ -11,9 +11,10 @@
   <rosparam command="load" file="$(find final_project_mixotics)/config/objects.yaml" />
   <param name="camera_frame" value="$(arg camera_frame)"/>
 
-  <!-- Optional rviz visualization of tf frames -->
+  <!-- Optional run with real robot and scene updates-->
   <group if="$(eval arg('demo') ==false)">
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find final_project_mixotics)/config/tags.rviz"/>
+    <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
+    <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
   </group>
 
   <!-- Optional demo with panda_moveit_config and update_scene node-->

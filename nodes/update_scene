@@ -110,20 +110,20 @@ class SceneUpdater:
                 else:
                     self.tag_check[i_name + "_tag"] = True
                     self.tag_bool.append(True)
+                    
+                    obj = PoseStamped()
+                    obj.header.frame_id = self.frame_id
+                    obj.pose.position.x = trans.transform.translation.x
+                    obj.pose.position.y = trans.transform.translation.y
+                    obj.pose.position.z = trans.transform.translation.z - (0.5*self.b_h) # bottle center is offset by height of the bottle
+                    obj.pose.orientation.x = trans.transform.rotation.x
+                    obj.pose.orientation.y = trans.transform.rotation.y
+                    obj.pose.orientation.z = trans.transform.rotation.z
+                    obj.pose.orientation.w = trans.transform.rotation.w
+
+                    self.scene.add_cylinder(i_name, obj, height=self.b_h, radius=self.b_r)
 
                 rospy.loginfo(i_name + "_tag transform is: " + str(trans))
-               
-                obj = PoseStamped()
-                obj.header.frame_id = self.frame_id
-                obj.pose.position.x = trans.transform.translation.x
-                obj.pose.position.y = trans.transform.translation.y
-                obj.pose.position.z = trans.transform.translation.z - (0.5*self.b_h) # bottle center is offset by height of the bottle
-                obj.pose.orientation.x = trans.transform.rotation.x
-                obj.pose.orientation.y = trans.transform.rotation.y
-                obj.pose.orientation.z = trans.transform.rotation.z
-                obj.pose.orientation.w = trans.transform.rotation.w
-
-                self.scene.add_cylinder(i_name, obj, height=self.b_h, radius=self.b_r)
 
             except tf2_ros.LookupException as e:
                 # Frames do not exist yet
