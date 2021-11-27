@@ -179,6 +179,7 @@ class mover():
             x = pos[desiredIngredient].position.x
             rospy.loginfo(x)
             y = pos[desiredIngredient].position.y
+            y = y+0.1
             rospy.loginfo(y)
             # x = 0.35
             # y = -0.35
@@ -186,12 +187,12 @@ class mover():
             # z = z+0.1
             # z = 0.08
 
-            orientation = self.move_group.get_current_rpy()
+            # orientation = self.move_group.get_current_rpy()
 
 
-            self.move_gripper.set_named_target('open')   
+            # self.move_gripper.set_named_target('open')   
 
-            self.move_gripper.go(wait=True)
+            # self.move_gripper.go(wait=True)
 
 
 #Do not change, this is the rotation neccesary to grip glass 
