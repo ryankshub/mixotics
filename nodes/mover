@@ -55,12 +55,6 @@ class mover():
         self.add_hitBox()
 
         self.approach()
-        
-        self.grab()
-
-        # self.go2Pour()
-
-        # self.go2Stock()
 
         # self.follow = rospy.Service("follow", follow, self.follow)
 
@@ -162,7 +156,7 @@ class mover():
                 return self.wait_for_state_update(box_is_known=True, timeout=timeout)
 
 
-    def approach(self):
+    def readyPos(self):
 
         '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
 
@@ -187,7 +181,6 @@ class mover():
 
             # self.move_gripper.go(wait=True)
             
-
 
 #Do not change, these are the joints neccesary to grip glass 
 
@@ -217,7 +210,7 @@ class mover():
 
         return []
 
-    def grab(self):
+    def readyGrab(self):
 
         '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
 
@@ -246,80 +239,12 @@ class mover():
 
         return []
 
-    # def go2Pour(self):
+    def approach(self):
 
-    #     '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
+        self.readyPos()
+        self.readyGrab()
 
-    #         Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-    #         function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-    #         environment. The user has the option to do so repeatedly or only once. 
-    #     '''   
-    #     while self.grabbed != True:
-    #         # if arg.repeat == True:
-    #         #     while True:
-    #         #         for i in self.waypointsFollow:
-    #         #             Pos = [i[0], i[1], i[2]]
-    #         #             grippy = i[3]
-    #         #             if grippy == True:
-    #         #                 self.move_gripper.set_named_target('Open')
-    #         #             elif grippy == False:
-    #         #                 self.move_gripper.set_named_target('Closed')
-            
-    #         x = 0.5
-    #         y = 0.5
-    #         z = 0.5
-    #         xrot = 0.5
-    #         yrot = 0
-    #         zrot = 0
-    #         w = 1
-            
-    #         self.move_group.set_position_target([x, y, z, xrot, yrot, zrot, w])
-    #         self.move_group.go(wait=True)
-
-    #         self.move_gripper.set_named_target('open')
-    #         self.move_gripper.go(wait=True)
-    #         self.grabbed = True
-
-    #     return []
-
-    # def go2Stock(self):
-
-    #     '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
-
-    #         Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-    #         function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-    #         environment. The user has the option to do so repeatedly or only once. 
-    #     '''   
-    #     while self.grabbed != True:
-    #         # if arg.repeat == True:
-    #         #     while True:
-    #         #         for i in self.waypointsFollow:
-    #         #             Pos = [i[0], i[1], i[2]]
-    #         #             grippy = i[3]
-    #         #             if grippy == True:
-    #         #                 self.move_gripper.set_named_target('Open')
-    #         #             elif grippy == False:
-    #         #                 self.move_gripper.set_named_target('Closed')
-            
-    #         x = 0.5
-    #         y = 0.5
-    #         z = 0.5
-    #         xrot = 0.5
-    #         yrot = 0
-    #         zrot = 0
-    #         w = 1
-            
-    #         self.move_group.set_position_target([x, y, z, xrot, yrot, zrot, w])
-    #         self.move_group.go(wait=True)
-
-    #         self.move_gripper.set_named_target('open')
-    #         self.move_gripper.go(wait=True)
-    #         self.grabbed = True
-
-    #     return []
-
-
-#action.grasp()
+        return []
 
 
 if __name__ == "__main__":
