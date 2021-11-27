@@ -52,11 +52,11 @@ class mover():
 
         self.add_table()
 
-        self.add_box()
+        self.add_hitBox()
 
         self.approach()
         
-        # self.grab()
+        self.grab()
 
         # self.go2Pour()
 
@@ -104,7 +104,7 @@ class mover():
             ## END_SUB_TUTORIAL
 
     
-    def add_box(self, timeout=4):
+    def add_hitBox(self, timeout=4):
 
                 '''The add_box function is neccesary for the mover class to add an obstacle within Rviz when intiated.
 
@@ -172,53 +172,30 @@ class mover():
         '''   
         while self.close != True:
 
-            desiredIngredient = "ingredient03"
-            pos = self.scene.get_object_poses([desiredIngredient])
+            self.desiredIngredient = "ingredient03"
+            pos = self.scene.get_object_poses([self.desiredIngredient])
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
-            x = pos[desiredIngredient].position.x
-            rospy.loginfo(x)
-            y = pos[desiredIngredient].position.y
-            y = y+0.1
-            rospy.loginfo(y)
-            # x = 0.35
-            # y = -0.35
-            z = pos[desiredIngredient].position.z
-            # z = z+0.1
-            # z = 0.08
+            self.x = pos[self.desiredIngredient].position.x
+            self.y = pos[self.desiredIngredient].position.y
+            self.y = self.y+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
+            self.z = pos[self.desiredIngredient].position.z
 
-            # orientation = self.move_group.get_current_rpy()
-
+#Gripper wasn't working last time so it has been commented out
 
             # self.move_gripper.set_named_target('open')   
 
             # self.move_gripper.go(wait=True)
-
-
-#Do not change, this is the rotation neccesary to grip glass 
-            xrot = 3.14
-            yrot = 0.0004406350355756517
-            zrot = -0.78
-
-            # group_variable_values = self.move_group.get_current_joint_values()
-            # rospy.loginfo(group_variable_values)
-
-            initPos = [-0.157079633, 0.610865, 0.191986, -2.54818071, -1.50098316, 1.44862, 0.785398]
             
-            # self.move_group.set_position_target([x, y, 0.5])
-            # self.move_group.set_orientation_target([xrot, yrot, zrot, 1])
-            self.move_group.set_joint_value_target(initPos)
-            # self.move_group.set_position_target([0, 0.2, 0.5])
 
-            # self.move_gripper.set_named_target('open')
+
+#Do not change, these are the joints neccesary to grip glass 
+
+            initPos = [-0.157079633, 0.610865, 0.191986, -2.54818071, -1.50098316, 1.44862, 0.785398] #Specified ready position
+            
+            self.move_group.set_joint_value_target(initPos)
 
             success, traj_msg, planTime, err = self.move_group.plan()
-
-            #if succes make boolean and save waypoints
-
-
-
-            # self.move_gripper.go(wait=True)
 
             if err.val == 1:
 
@@ -235,75 +212,39 @@ class mover():
 
             rospy.loginfo("Time to Move")
 
-            current = self.move_group.get_current_pose()
-            xCurrent = current.pose.position.x
-            yCurrent = current.pose.position.y
-            # zCurrent = current.pose.position.z
-            
-
-            self.scene.remove_world_object(desiredIngredient)
-
-            # rospy.wait_for_service('refresh')
-
-            # rospy.loginfo(posi)
-
-            # self.move_group.set_goal_orientation_tolerance(0.1)
-
-            self.move_group.shift_pose_target(0, x-xCurrent)
-            success, traj_msg, planTime, err = self.move_group.plan()
-            self.move_group.execute(traj_msg, wait=True)
-
-
-            # self.move_group.shift_pose_target(0, (z-zCurrent)/2)
-            self.move_group.shift_pose_target(1, y-yCurrent)
-            success, traj_msg, planTime, err = self.move_group.plan()
-            self.move_group.execute(traj_msg, wait=True)
-
-            # return err.val
-
-
-
-#Initialize check service, if distance greater than blah not considered close. 
 
             self.close = True
 
         return []
 
-    # def grab(self):
+    def grab(self):
 
-    #     '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
+        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
 
-    #         Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-    #         function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-    #         environment. The user has the option to do so repeatedly or only once. 
-    #     '''   
-    #     while self.grabbed != True:
-    #         # if arg.repeat == True:
-    #         #     while True:
-    #         #         for i in self.waypointsFollow:
-    #         #             Pos = [i[0], i[1], i[2]]
-    #         #             grippy = i[3]
-    #         #             if grippy == True:
-    #         #                 self.move_gripper.set_named_target('Open')
-    #         #             elif grippy == False:
-    #         #                 self.move_gripper.set_named_target('Closed')
+            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
+            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
+            environment. The user has the option to do so repeatedly or only once. 
+        '''   
+
+        current = self.move_group.get_current_pose() #Current position for pos shift
+        xCurrent = current.pose.position.x
+        yCurrent = current.pose.position.y
+        zCurrent = current.pose.position.z
             
-    #         x = 0.5
-    #         y = 0.5
-    #         z = 0.5
-    #         xrot = 0.5
-    #         yrot = 0
-    #         zrot = 0
-    #         w = 1
-            
-    #         self.move_group.set_position_target([x, y, z, xrot, yrot, zrot, w])
-    #         self.move_group.go(wait=True)
 
-    #         self.move_gripper.set_named_target('open')
-    #         self.move_gripper.go(wait=True)
-    #         self.grabbed = True
+        self.scene.remove_world_object(self.desiredIngredient) #Removes bottle so the motion is not considred a collision
 
-    #     return []
+
+        self.move_group.shift_pose_target(0, self.x-xCurrent)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
+
+
+        self.move_group.shift_pose_target(1, self.y-yCurrent)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
+
+        return []
 
     # def go2Pour(self):
 
