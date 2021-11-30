@@ -6,6 +6,8 @@
   <arg name="camera_name" default="camera" />
   <arg name="camera_frame" default="camera_link" />
   <arg name="image_topic" default="image_rect" />
+  <arg name="use_color" default="false" />
+
   
   <!-- Load list of ingredients -->
   <rosparam command="load" file="$(find final_project_mixotics)/config/objects.yaml" />
@@ -36,7 +38,8 @@
 
   <!-- Set parameters and node for april tag detection (default settings detect first 4 tags of size 30 mm in materials/tag36h11_30mm.pdf) -->
   <rosparam command="load" file="$(find final_project_mixotics)/config/settings.yaml" ns="$(arg node_namespace)" />
-  <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)" />
+  <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)" if="$(eval arg('use_color') == 'false')"/>
+  <rosparam command="load" file="$(find final_project_mixotics)/config/tags_color.yaml" ns="$(arg node_namespace)" if="$(eval arg('use_color') == 'true')"/>
   
   <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
     <!-- Remap topics from those used in code to those on the ROS network -->
