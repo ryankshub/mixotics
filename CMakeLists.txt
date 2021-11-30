@@ -164,6 +164,7 @@ catkin_install_python(PROGRAMS
   nodes/update_scene
   nodes/fixed_tag
   nodes/mover
+  nodes/vision
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
