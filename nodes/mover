@@ -1,0 +1,264 @@
+#! usr/bin/env python
+
+from rosgraph.roslogging import RospyLogger
+import rospy
+import moveit_commander
+from moveit_msgs.msg import MoveItErrorCodes
+import geometry_msgs.msg
+from moveit_commander.conversions import pose_to_list
+from rospy.core import rospydebug
+from std_srvs.srv import EmptyResponse, Empty
+#from arm_move.srv import step, follow, reset, resetResponse
+from actionlib_msgs.msg import GoalStatusArray
+import copy
+
+class mover():
+
+    '''The mover class contains the functions neccesary for a robot in gazebo to reset, set, and follow waypoints to move a px100 robotic arm.
+        The functions inside mover are the init, reset, step, and follow functions. As well besides the 3 main functions it contains functions
+        used to add objects in Rviz such as a table and an obstacle, as well as the wait_for_state_update function which aids in the simulation
+        not breaking. 
+            Typical usage example:
+                Mover = mover()
+    '''
+
+    def __init__(self):
+
+        '''The init function is neccesary for the mover class to initialize all variables, parameters, and other functions.
+            Inside the function the parameters exist, and calls to other functions and services are made so they can be executed in main.
+        '''
+               
+        self.scene = moveit_commander.PlanningSceneInterface()
+
+        group_name = "panda_arm"
+
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        self.move_gripper = moveit_commander.MoveGroupCommander('hand')
+
+        planning_frame = self.move_group.get_planning_frame()
+
+        self.waypoints = []
+
+        self.box_name = ""
+
+        # self.scene = scene
+
+        self.planning_frame = planning_frame
+
+        self.close = False
+
+        self.add_table()
+
+        self.add_hitBox()
+
+        self.approach()
+
+        # self.follow = rospy.Service("follow", follow, self.follow)
+
+
+    def wait_for_state_update(
+            self, box_is_known=False, box_is_attached=False, timeout=4
+        ):
+
+            '''The wait_for_state_update function is taken and modified from the interbotix example, and is neccesary for the mover class to be able to intialize its 
+                its other functions without breaking the rviz simulation due to prematurely loading parameters. 
+                Inside the function calls are made that allow for variables to wait for initialization so that the program runs in an order which does not allow for
+                it to break.
+            '''
+
+            table_name = self.table_name
+
+            scene = self.scene
+
+            start = rospy.get_time()
+            seconds = rospy.get_time()
+            while (seconds - start < timeout) and not rospy.is_shutdown():
+                # Test if the box is in attached objects
+                attached_objects = scene.get_attached_objects([table_name])
+                is_attached = len(attached_objects.keys()) > 0
+
+                # Test if the box is in the scene.
+                # Note that attaching the box will remove it from known_objects
+                is_known = table_name in scene.get_known_object_names()
+
+                # Test if we are in the expected state
+                if (box_is_attached == is_attached) and (box_is_known == is_known):
+                    return True
+
+                # Sleep so that we give other threads time on the processor
+                rospy.sleep(0.1)
+                seconds = rospy.get_time()
+
+            # If we exited the while loop without returning then we timed out
+            return False
+            ## END_SUB_TUTORIAL
+
+    
+    def add_hitBox(self, timeout=4):
+
+                '''The add_box function is neccesary for the mover class to add an obstacle within Rviz when intiated.
+                    Inside the function the variables for creating an obstacle are defined, the definition is based on user
+                    input which comes from the reset node. 
+                '''    
+
+                rospy.sleep(2)
+
+                box_name = self.box_name
+                scene = self.scene
+
+                box_pose = geometry_msgs.msg.PoseStamped()
+                box_pose.header.frame_id = "world"
+
+                box_pose.pose.position.x = 0.415
+                box_pose.pose.position.y = 0
+                box_pose.pose.position.z = -0.1
+                box_pose.pose.orientation.x = 0
+                box_pose.pose.orientation.y = 0
+                box_pose.pose.orientation.z = 0
+                box_pose.pose.orientation.w = 1
+
+                box_name = "box"
+                scene.add_box(box_name, box_pose, size=(0.45, 0.85, 0.19))
+
+                rospy.loginfo('added hitbox')
+
+
+                self.box_name = box_name
+                return self.wait_for_state_update(box_is_known=True, timeout=timeout)
+
+    def add_table(self, timeout=4):
+
+                '''The add_table function is neccesary for the mover class to add a surface within Rviz when intiated.
+                    Inside the function the variables for creating a surface are defined so that objects do not fall through 
+                    when simulated   
+                '''    
+
+                rospy.sleep(2)
+                table_name = self.box_name
+                scene = self.scene
+
+                table_pose = geometry_msgs.msg.PoseStamped()
+                table_pose.header.frame_id = "world"
+                table_pose.pose.orientation.w = 1.0
+                table_pose.pose.position.x = 0  
+                table_pose.pose.position.y = 0
+                table_pose.pose.position.z = -0.25
+                table_name = "table"
+                scene.add_box(table_name, table_pose, size=(2, 2, 0.3))
+
+                self.table_name = table_name
+                return self.wait_for_state_update(box_is_known=True, timeout=timeout)
+
+
+    def readyPos(self):
+
+        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
+            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
+            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
+            environment. The user has the option to do so repeatedly or only once. 
+        '''   
+        while self.close != True:
+
+            self.desiredIngredient = "ingredient03"
+            pos = self.scene.get_object_poses([self.desiredIngredient])
+
+# #X, Y, Z variables need to be changed according to coordinates of bottle of interest
+            self.x = pos[self.desiredIngredient].position.x
+            self.y = pos[self.desiredIngredient].position.y
+            self.y = self.y+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
+            self.z = pos[self.desiredIngredient].position.z
+
+#Gripper wasn't working last time so it has been commented out
+
+            # self.move_gripper.set_named_target('open')   
+
+            # self.move_gripper.go(wait=True)
+            
+
+#Do not change, these are the joints neccesary to grip glass 
+
+            initPos = [-0.157079633, 0.610865, 0.191986, -2.54818071, -1.50098316, 1.44862, 0.785398] #Specified ready position
+            
+            self.move_group.set_joint_value_target(initPos)
+
+            success, traj_msg, planTime, err = self.move_group.plan()
+
+            if err.val == 1:
+
+
+                rospy.loginfo("yeeha")
+
+                self.move_group.execute(traj_msg, wait=True)
+
+                # self.move_group.go(wait=True)
+
+            else:
+                rospy.loginfo("nooooo")
+                pass
+
+            rospy.loginfo("Time to Move")
+
+
+            self.close = True
+
+        return []
+
+    def readyGrab(self):
+
+        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
+            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
+            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
+            environment. The user has the option to do so repeatedly or only once. 
+        '''   
+
+        current = self.move_group.get_current_pose().pose #Current position for pos shift
+
+        current_pose = self.move_group.get_current_pose() #Current position for pos shift
+        xCurrent = current_pose.pose.position.x
+        yCurrent = current_pose.pose.position.y
+        zCurrent = current_pose.pose.position.z
+
+        waypoints = []   
+
+        self.scene.remove_world_object(self.desiredIngredient) #Removes bottle so the motion is not considred a collision
+
+        current.position.x += self.x-xCurrent
+
+        waypoints.append(copy.deepcopy(current))
+
+        (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        self.move_group.execute(plan, wait = True)
+
+        current.position.y += self.y-yCurrent
+
+        waypoints.append(copy.deepcopy(current))
+
+        (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        self.move_group.execute(plan, wait = True)
+
+        #self.move_group.shift_pose_target(0, self.x-xCurrent)
+        #success, traj_msg, planTime, err = self.move_group.plan()
+        #self.move_group.execute(traj_msg, wait=True)
+
+
+        #self.move_group.shift_pose_target(1, self.y-yCurrent)
+        #success, traj_msg, planTime, err = self.move_group.plan()
+        #self.move_group.execute(traj_msg, wait=True)
+
+        return []
+
+    def approach(self):
+
+        self.readyPos()
+        self.readyGrab()
+
+        return []
+
+
+if __name__ == "__main__":
+        rospy.init_node("mover2") #Initialize the node
+        rospy.wait_for_message('move_group/status', GoalStatusArray)
+        Mover = mover()
+        # rospy.spin() #Keep running 
