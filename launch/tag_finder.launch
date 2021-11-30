@@ -17,6 +17,7 @@
   <group if="$(eval arg('demo') ==false)">
     <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
     <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
+    <node name="vision" pkg="final_project_mixotics" type="vision"/>
   </group>
 
   <!-- Optional demo with panda_moveit_config and update_scene node-->
@@ -25,6 +26,7 @@
     <!-- Nodes for identifying scene objects -->
     <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
     <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
+    <node name="vision" pkg="final_project_mixotics" type="vision"/>
   </group>
   
   <!-- Launch RealSense camera -->
