@@ -55,7 +55,7 @@ class Vision:
         # coffee = orange, cup = red
         thresholds = {
             'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            'sugar': (np.array([40, 70, 20]), np.array([50, 255, 255])),
+            'sugar': (np.array([35, 70, 20]), np.array([55, 255, 255])),
             'lemon': (np.array([75, 75, 20]), np.array([95, 255, 255])),
             'coffee': (np.array([100, 75, 20]), np.array([120, 255, 255])),
             'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
