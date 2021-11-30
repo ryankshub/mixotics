@@ -25,8 +25,8 @@ class Vision:
 
         self.bridge = CvBridge()
         self.intrinsics = None
-        self.color_image = None
-        self.depth_image = None
+        self.color_image = []
+        self.depth_image = []
         self.r = rospy.Rate(100)
 
 
@@ -49,6 +49,13 @@ class Vision:
         try:
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
         except:
+            return False
+
+        if (len(self.color_image) == 0): 
+            rospy.logerr('MISSING COLOR IMAGE')
+            return False
+        elif (len(self.depth_image) == 0):
+            rospy.logerr('MISSING DEPTH IMAGE')
             return False
 
         # water = blue, sugar = green, lemon = yellow, 
@@ -153,9 +160,10 @@ class Vision:
     def depth_callback(self, img):
         try:
             depth_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
+            self.depth_image = depth_image
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        self.depth_image = depth_image
+        
 
     def intr_callback(self, intr):
         intrinsics = rs.intrinsics()
