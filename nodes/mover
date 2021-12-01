@@ -3,6 +3,7 @@
 from rosgraph.roslogging import RospyLogger
 import rospy
 import moveit_commander
+import actionlib
 from moveit_msgs.msg import MoveItErrorCodes
 import geometry_msgs.msg
 from moveit_commander.conversions import pose_to_list
@@ -12,6 +13,7 @@ from std_srvs.srv import EmptyResponse, Empty
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
+from math import pi
 
 class mover():
 
@@ -38,7 +40,7 @@ class mover():
 
         planning_frame = self.move_group.get_planning_frame()
         
-        display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        #display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 
         self.waypoints = []
 
@@ -59,10 +61,14 @@ class mover():
         self.grasp()
         
         self.movetopour()
+
+        self.tilt()
         
-        self.squeeze()
+        #self.squeeze()
+
+        self.untilt()
         
-        self.grasp()
+        #self.grasp()
         
         self.movetodrop()
         
@@ -328,11 +334,11 @@ class mover():
         
     def squeeze(self):
         
-        client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
-        client.wait_for_server()
+        client2 = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
+        client2.wait_for_server()
         goal = GraspGoal(width = 0.002, epsilon = GraspEpsilon(0.1, 0.1), speed = 0.15, force = 10)
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5.0))
+        client2.send_goal(goal)
+        client2.wait_for_result(rospy.Duration.from_sec(5.0))
         
     def movetodrop(self):
 
@@ -377,15 +383,27 @@ class mover():
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
         self.move_group.execute(plan, wait = True)
+
+    def tilt(self):              
+        joint_goal = self.move_group.get_current_joint_values()
+        joint_goal[5] = joint_goal[5]+pi/6
+        self.move_group.go(joint_goal, wait=True)
+        self.move_group.stop()
+
+    def untilt(self):              
+        joint_goal = self.move_group.get_current_joint_values()
+        joint_goal[5] = joint_goal[5]-pi/6
+        self.move_group.go(joint_goal, wait=True)
+        self.move_group.stop()
         
         
     def gripperopen(self):
         
-        client = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
-        client.wait_for_server()
+        client3 = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
+        client3.wait_for_server()
         goal = MoveGoal(width = 0.07, speed = 0.08)
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5.0))
+        client3.send_goal(goal)
+        client3.wait_for_result(rospy.Duration.from_sec(5.0))
 
 
        
