@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+#File for OrderHandler Node
+#RKS
+
+# Project imports
+from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
+from menu_utilities.menu_parser import parse_menu_xml
+# Python imports
+
+
+# 3rd-party imports
+import rospy
+
+class OrderHandler:
+    """
+    ROS Node responsible for receiving customer orders, translating them into
+    high-level commands for the robot, and passing commands to the robot. The 
+    node also sorts command order for effciency, validates orders from 
+    customers, and track status of orders
+
+    SERVICES:
+        process_order Order
+
+        update_inventory InventoryUpdate
+
+        verify_instr VerifyInstr
+
+    CLIENTS:
+        drink_instr DrinkInstr
+
+    PARAMS:
+        + filepath menu.xml ~ filepath to the current menu configuration file.
+            The default is the 'config/menu.xml'
+    """
+    def __init__(self):
+        """
+        Constructor of ROS Node OrderHandler class. Creates all 3 services, 
+        client, order trackers, and internal varibles
+        
+        Public member:
+        filepath menu_path: Filepath to menu configuration
+        """
+        #init node
+        rospy.init_node("order_handler")
+        self.menu_path = rospy.get_param("/mixotics/menu_path", "/config/menu.xml")
+        self.main_loop()
+
+    def main_loop(self):
+        pass
+
+
+#Activate 'order_handler' node
+def main():
+    """
+    Activation function for order handler
+    """
+    order_handler = OrderHandler()
+
+# Main Execution loop
+if __name__ == "__main__":
+    try:
+        main()
+    #If something kills this node, have it die
+    except rospy.ROSInterruptException:
+        pass

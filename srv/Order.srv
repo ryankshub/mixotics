@@ -1,0 +1,6 @@
+# Request for order_handler/order service
+# Given an encoded list of orders, return order_number mapping to orders
+uint8[] orders
+---
+# Positive number if order was valid, 0 if order was not
+uint8 order_num 
