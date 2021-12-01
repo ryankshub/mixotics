@@ -1,0 +1,10 @@
+# Request for order_handler/verify_instr service
+# Error code definition
+uint8 SUCCESS=0
+unit8 FAILURE=1
+
+# Confirm the status of instr sent eariler
+uint16 instr_id
+uint8 err_code
+---
+# Empty Response, no response necessary 

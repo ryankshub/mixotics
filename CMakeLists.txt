@@ -58,6 +58,8 @@ add_service_files(
   FILES
   Order.srv
   InventoryUpdate.srv
+  VerifyInstr.srv
+  DrinkInstr.srv
 )
 
 ## Generate actions in the 'action' folder
