@@ -1,0 +1,6 @@
+# Request for order_handler/update_inventory service
+# Given an ingredient name and whether the ingredient is available
+string ingredient
+bool available #True is inventory has ingredient
+---
+# Empty Response
