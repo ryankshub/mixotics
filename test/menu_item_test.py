@@ -16,7 +16,7 @@ PKG = 'final_project_mixotics'
 
 class MitemTestCase(unittest.TestCase):
     """
-    Test Case for
+    Test Case for menu item object
     """
     def test_basic_case(self):
         good_name = "lemonade"
