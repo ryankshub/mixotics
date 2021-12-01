@@ -68,11 +68,12 @@ class mover():
 
         self.untilt()
         
-        #self.grasp()
+        self.grasp()
         
         self.movetodrop()
         
         self.gripperopen()
+
 
         # self.follow = rospy.Service("follow", follow, self.follow)
 
@@ -248,7 +249,7 @@ class mover():
         waypoints.append(copy.deepcopy(current))
 
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5,0.5)
         self.move_group.execute(plan, wait = True)
 
         current.position.y += self.y-yCurrent
@@ -256,7 +257,7 @@ class mover():
         waypoints.append(copy.deepcopy(current))
 
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5,0.5)
         self.move_group.execute(plan, wait = True)
 
         #self.move_group.shift_pose_target(0, self.x-xCurrent)
@@ -282,13 +283,13 @@ class mover():
         
         client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
         client.wait_for_server()
-        goal = GraspGoal(width = 0.01, epsilon = GraspEpsilon(0.05, 0.05), speed = 0.15, force = 10)
+        goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.025, 0.025), speed = 0.015, force = 12)
         client.send_goal(goal)
         client.wait_for_result(rospy.Duration.from_sec(5.0))
         
     def movetopour(self):
 
-        self.desiredLocation = "ingredient02"       #Change ingredient name as required
+        self.desiredLocation = "ingredient01"       #Change ingredient name as required
         pos_pour = self.scene.get_object_poses([self.desiredLocation])
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
@@ -296,7 +297,7 @@ class mover():
         self.y_pour = pos_pour[self.desiredLocation].position.y
         self.y_pour = self.y_pour+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
         self.z_pour = pos_pour[self.desiredLocation].position.z
-        self.z_pour = self.z_pour+0.175 #Offset on z so we can pour rom above
+        self.z_pour = self.z_pour+0.272 #Offset on z so we can pour rom above
         
         
         current = self.move_group.get_current_pose().pose #Current position for pos shift
@@ -333,6 +334,7 @@ class mover():
         self.move_group.execute(plan, wait = True)
         
     def squeeze(self):
+
         
         client2 = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
         client2.wait_for_server()
