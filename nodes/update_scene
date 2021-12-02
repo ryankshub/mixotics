@@ -10,8 +10,11 @@ import rospy
 import tf2_ros
 import moveit_commander
 import json
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Quaternion
 from final_project_mixotics.srv import Refresh
+from tf_conversions import transformations
+from math import pi
+from rospkg import RosPack
 
 class SceneUpdater:
     """
@@ -20,9 +23,17 @@ class SceneUpdater:
     def __init__(self):
         # Check for parameters
         self.i_list = rospy.get_param("/ingredient_list", [])
-        self.b_h = rospy.get_param("/bottle_height", 0.140)
-        self.b_r = rospy.get_param("/bottle_radius", 0.031)
+        self.c_list = rospy.get_param("/coaster_list", [])
+        self.t_list = rospy.get_param("/table_list", [])
+        self.b_h = rospy.get_param("/bottle_height", 0.1215)
+        self.b_r = rospy.get_param("/bottle_radius", 0.024)
+        self.c_d = rospy.get_param("/coaster_dim", 0.04)
+        self.t_d = rospy.get_param("/table_dim", [[]])
+        self.color = rospy.get_param("/use_color", False)
         self.camera_frame = rospy.get_param("/camera_frame", "camera")
+
+        # Find model file for squeeze bottle and compute static transform
+        self.stl = RosPack().get_path("final_project_mixotics") + "/models/squeeze_bottle_origin.STL"
 
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('update_scene')
@@ -33,7 +44,8 @@ class SceneUpdater:
 
         # Define services and associated proxies
         self.update_scene = rospy.Service("update_scene/refresh", Refresh, self.scene_callback)
-
+        self.update_fixed = rospy.Service("update_scene/fixed", Refresh, self.fixed_callback)
+        
         # Create static broadcaster and to define transform between static robot tag and camera
         self.static_broadcaster = tf2_ros.StaticTransformBroadcaster()
         self.tag_camera_tf = TransformStamped()
@@ -93,7 +105,6 @@ class SceneUpdater:
 
         # Check for transforms between world and ingredients
         self.obj_list = self.scene.get_known_object_names()
-        self.obj_check = []
         for i_name in self.i_list:
 
             if i_name in self.obj_list:
@@ -116,12 +127,14 @@ class SceneUpdater:
                     obj.pose.position.x = trans.transform.translation.x
                     obj.pose.position.y = trans.transform.translation.y
                     obj.pose.position.z = trans.transform.translation.z - (0.5*self.b_h) # bottle center is offset by height of the bottle
-                    obj.pose.orientation.x = trans.transform.rotation.x
-                    obj.pose.orientation.y = trans.transform.rotation.y
-                    obj.pose.orientation.z = trans.transform.rotation.z
-                    obj.pose.orientation.w = trans.transform.rotation.w
 
-                    self.scene.add_cylinder(i_name, obj, height=self.b_h, radius=self.b_r)
+                    rot = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
+                    eul = transformations.euler_from_quaternion(rot)
+                    quat = transformations.quaternion_from_euler(eul[0]+(pi/2), eul[1], eul[2]) # correct bottle pitch based on .stl file
+                    obj.pose.orientation = Quaternion(*quat)
+
+                    #self.scene.add_cylinder(i_name, obj, height=self.b_h, radius=self.b_r)
+                    self.scene.add_mesh(i_name, obj, self.stl, size=(1,1,1))
 
                 rospy.loginfo(i_name + "_tag transform is: " + str(trans))
 
@@ -145,7 +158,164 @@ class SceneUpdater:
 
                 self.tag_check[i_name + "_tag"] = False
                 self.tag_bool.append(False)
+        
+        # Check for transforms between world and coasters
+        for c_name in self.c_list:
+
+            if c_name in self.obj_list:
+                self.scene.remove_world_object(name=c_name)
             
+            try:
+                # Lookup latest transform between world and ingredient list
+                trans = self.buffer.lookup_transform("world", c_name + "_tag", rospy.Time())
+
+                # Check if transform is out-of-date (> 1.5 seconds since new transform)
+                if ((rospy.Time.now().to_sec() - trans.header.stamp.secs) > 1.5):
+                    self.tag_check[c_name + "_tag"] = False
+                    self.tag_bool.append(False)
+                else:
+                    self.tag_check[c_name + "_tag"] = True
+                    self.tag_bool.append(True)
+                    
+                    obj = PoseStamped()
+                    obj.header.frame_id = self.frame_id
+                    obj.pose.position.x = trans.transform.translation.x
+                    obj.pose.position.y = trans.transform.translation.y
+                    obj.pose.position.z = trans.transform.translation.z - 0.00125 # offset for coaster
+                    obj.pose.orientation.x = trans.transform.rotation.x
+                    obj.pose.orientation.y = trans.transform.rotation.y
+                    obj.pose.orientation.z = trans.transform.rotation.z
+                    obj.pose.orientation.w = trans.transform.rotation.w
+
+                    self.scene.add_box(c_name, obj, size=(self.c_d, self.c_d, 0.0025))
+
+                rospy.loginfo(c_name + "_tag transform is: " + str(trans))
+
+            except tf2_ros.LookupException as e:
+                # Frames do not exist yet
+                rospy.loginfo(c_name + "_tag lookup exception: " + str(e))
+
+                self.tag_check[c_name + "_tag"] = False
+                self.tag_bool.append(False)
+
+            except tf2_ros.ConnectivityException as e:
+                # Disconnection in the tf tree
+                rospy.loginfo(c_name + "_tag connectivity exception: " + str(e))
+                
+                self.tag_check[c_name + "_tag"] = False
+                self.tag_bool.append(False)
+
+            except tf2_ros.ExtrapolationException as e:
+                # Issue in extrapolation between times
+                rospy.loginfo(c_name + "_tag extrapolation exception: " + str(e))
+
+                self.tag_check[c_name + "_tag"] = False
+                self.tag_bool.append(False)
+        
+        return [all(self.tag_bool), json.dumps(self.tag_check)]
+
+
+    def fixed_callback(self, req):
+        """
+        Callback for update_scene/fixed service (generates fixed planning scene objects (tables, panda_tag) based on apriltag tf)
+        """
+        # Check transform from robot tag to camera and set static robot tag frame
+        self.tag_check = {}
+        self.tag_bool = []
+        try:
+            # Lookup latest transform between robot tag and camera
+            trans = self.buffer.lookup_transform("panda_tag", self.camera_frame, rospy.Time())
+
+            # Check if transform is out-of-date (> 1.5 seconds since new transform)
+            if ((rospy.Time.now().to_sec() - trans.header.stamp.secs) > 1.5):
+                self.tag_check["panda_tag"] = False
+                self.tag_bool.append(False)
+            else:
+                self.tag_check["panda_tag"] = True
+                self.tag_bool.append(True)
+
+            rospy.loginfo("panda_tag transform is: " + str(trans))
+            
+            # Set static transform equal to robot tag transform
+            self.tag_camera_tf.transform = trans.transform
+            self.tag_camera_tf.header.stamp = rospy.Time.now()
+            self.static_broadcaster.sendTransform(self.tag_camera_tf)
+
+        except tf2_ros.LookupException as e:
+            # Frames do not exist yet
+            rospy.loginfo("panda_tag lookup exception: " + str(e))
+            self.tag_check["panda_tag"] = False
+            self.tag_bool.append(False)
+
+        except tf2_ros.ConnectivityException as e:
+            # Disconnection in the tf tree
+            rospy.loginfo("panda_tag connectivity exception: " + str(e))
+            self.tag_check["panda_tag"] = False
+            self.tag_bool.append(False)
+
+        except tf2_ros.ExtrapolationException as e:
+            # Issue in extrapolation between times
+            rospy.loginfo("panda_tag extrapolation exception: " + str(e))
+            self.tag_check["panda_tag"] = False
+            self.tag_bool.append(False)
+
+        # Check for transforms between world and ingredients
+        self.obj_list = self.scene.get_known_object_names()
+        t_n = 0
+        for t_name in self.t_list:
+
+            if t_name in self.obj_list:
+                self.scene.remove_world_object(name=t_name)
+            
+            try:
+                # Lookup latest transform between world and ingredient list
+                trans = self.buffer.lookup_transform("world", t_name + "_tag", rospy.Time())
+
+                # Check if transform is out-of-date (> 1.5 seconds since new transform)
+                if ((rospy.Time.now().to_sec() - trans.header.stamp.secs) > 1.5):
+                    self.tag_check[t_name + "_tag"] = False
+                    self.tag_bool.append(False)
+                else:
+                    self.tag_check[t_name + "_tag"] = True
+                    self.tag_bool.append(True)
+                    
+                    obj = PoseStamped()
+                    obj.header.frame_id = self.frame_id
+                    obj.pose.position.x = trans.transform.translation.x
+                    obj.pose.position.y = trans.transform.translation.y
+                    obj.pose.position.z = trans.transform.translation.z - (0.5 * t_d[t_n][2])
+                    obj.pose.orientation.x = trans.transform.rotation.x
+                    obj.pose.orientation.y = trans.transform.rotation.y
+                    obj.pose.orientation.z = trans.transform.rotation.z
+                    obj.pose.orientation.w = trans.transform.rotation.w
+
+                    self.scene.add_box(c_name, obj, size=(t_d[t_n][0], t_d[t_n][1], t_d[t_n][2]))
+
+                rospy.loginfo(t_name + "_tag transform is: " + str(trans))
+
+            except tf2_ros.LookupException as e:
+                # Frames do not exist yet
+                rospy.loginfo(t_name + "_tag lookup exception: " + str(e))
+
+                self.tag_check[t_name + "_tag"] = False
+                self.tag_bool.append(False)
+
+            except tf2_ros.ConnectivityException as e:
+                # Disconnection in the tf tree
+                rospy.loginfo(t_name + "_tag connectivity exception: " + str(e))
+                
+                self.tag_check[t_name + "_tag"] = False
+                self.tag_bool.append(False)
+
+            except tf2_ros.ExtrapolationException as e:
+                # Issue in extrapolation between times
+                rospy.loginfo(t_name + "_tag extrapolation exception: " + str(e))
+
+                self.tag_check[t_name + "_tag"] = False
+                self.tag_bool.append(False)
+            
+            t_n += 1 # counter for table number
+        
         return [all(self.tag_bool), json.dumps(self.tag_check)]
 
 def main():
