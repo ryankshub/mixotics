@@ -7,6 +7,7 @@
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
+
   <maintainer email="ryanking-shepard@u.northwestern.edu">RKS</maintainer>
   <maintainer email="M@todo.todo">Marshall Johnson</maintainer>
   <maintainer email="matthewshort2025@u.northwestern.edu">Matt Short</maintainer>
@@ -29,12 +30,12 @@
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
   <!-- Example: -->
+
   <author email="ryanking-shepard@u.northwestern.edu">RKS</author>
   <author email="M@todo.todo">Marshall Johnson</author>
   <author email="matthewshort2025@u.northwestern.edu">Matt Short</author>
-  <author email="E@todo.todo">Eric Codrea</author>
+  <author email="EricCodrea2022@u.northwestern.edu">Eric Codrea</author>
   <author email="kaarthikpranav97@gmail.com">Pranav Kaarthik</author>
-
 
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
@@ -58,12 +59,25 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>moveit_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
   <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>moveit_msgs</build_export_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>rviz</exec_depend>
   <exec_depend>usb_cam</exec_depend>
   <exec_depend>image_proc</exec_depend>
   <exec_depend>apriltag_ros</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>panda_moveit_config</exec_depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
