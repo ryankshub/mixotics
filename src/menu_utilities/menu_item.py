@@ -10,7 +10,7 @@ from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
 
 class MenuItem:
     """
-    Representation of an menu item the Franka robot can make.
+    Representation of a menu item the Franka robot can make.
     """
     def __init__(self, name, ingredients, instructions):
         """
