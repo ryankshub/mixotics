@@ -4,3 +4,4 @@ string[] orders
 ---
 # Positive number if order was valid, 0 if order was not
 uint8 order_num 
+string msg

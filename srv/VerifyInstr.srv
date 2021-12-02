@@ -1,7 +1,7 @@
 # Request for order_handler/verify_instr service
 # Error code definition
 uint8 SUCCESS=0
-unit8 FAILURE=1
+uint8 FAILURE=1
 
 # Confirm the status of instr sent eariler
 uint16 instr_id
