@@ -1,0 +1,230 @@
+#! /usr/bin/env python
+
+import rospy
+import actionlib
+import actionlib_msgs
+import sys
+import copy
+from moveit_commander import RobotCommander, PlanningSceneInterface, roscpp_initialize, roscpp_shutdown, MoveGroupCommander
+from geometry_msgs.msg import PoseStamped, Pose
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from moveit_msgs.msg import MoveItErrorCodes
+from moveit_commander.conversions import pose_to_list
+from math import pi
+from std_srvs.srv import Empty, EmptyResponse, SetBool, SetBoolResponse
+from actionlib_msgs.msg import GoalStatusArray
+
+
+class mover():
+    """
+    The gripper class looks at fine control of the gripper - i.e. it pours the drink, shakes the drink cup 
+    """
+
+    def __init__(self):
+        self.scene = moveit_commander.PlanningSceneInterface()
+        self.robot = moveit_commander.RobotCommander()
+
+        self.group_name = "panda_arm"
+
+        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
+        self.move_gripper = moveit_commander.MoveGroupCommander('hand')
+
+        display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        
+        #self.planning_frame = planning_frame
+
+        self.gripper_tilt()
+        #self.grippertip()
+
+    
+    def gripper_tilt(self):
+
+        init = self.move_group.get_current_pose()
+        
+        x = init.pose.position.x
+        y = init.pose.position.y
+        z = init.pose.position.z 
+
+        # x_pose = init.pose.orientation.x
+        # y_pose = init.pose.orientation.y 
+        # z_pose = init.pose.orientation.z 
+        # w_pose = init.pose.orientation.w
+        
+
+        print (">>>> Printing robot pose")
+        print (self.move_group.get_current_pose())
+
+        waypoints = []  
+
+
+        #self.move_group.shift_pose_target(1, -0.25)
+        #success, traj_msg, planTime, err = self.move_group.plan()
+        #self.move_group.execute(traj_msg, wait=True)
+
+        self.desiredIngredient = "ingredient02"
+        pos = self.scene.get_object_poses([self.desiredIngredient])
+
+# #X, Y, Z variables need to be changed according to coordinates of bottle of interest
+        self.x = pos[self.desiredIngredient].position.x
+        self.y = pos[self.desiredIngredient].position.y
+        self.y = self.y+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
+        self.z = pos[self.desiredIngredient].position.z
+        self.z = self.z+0.175
+
+
+        current = self.move_group.get_current_pose().pose #Current position for pos shift
+
+        current_pose = self.move_group.get_current_pose() #Current position for pos shift
+        xCurrent = current_pose.pose.position.x
+        yCurrent = current_pose.pose.position.y
+        zCurrent = current_pose.pose.position.z
+
+        waypoints = []   
+
+        self.scene.remove_world_object(self.desiredIngredient) #Removes bottle so the motion is not considred a collision
+        current.position.z += self.z-zCurrent
+
+        waypoints.append(copy.deepcopy(current))
+
+        (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        self.move_group.execute(plan, wait = True)
+
+
+       
+        waypoints = []
+        
+        current.position.x += self.x-xCurrent
+
+        waypoints.append(copy.deepcopy(current))
+
+        (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        self.move_group.execute(plan, wait = True)
+
+
+        waypoints = []
+
+        current.position.y += self.y-yCurrent
+
+        waypoints.append(copy.deepcopy(current))
+
+        (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25)
+        self.move_group.execute(plan, wait = True)
+
+                
+        joint_goal = self.move_group.get_current_joint_values()
+        joint_goal[5] = joint_goal[5]+pi/6
+        self.move_group.go(joint_goal, wait=True)
+        self.move_group.stop()
+
+
+        
+        # init = self.move_group.get_current_pose().pose
+
+
+        # init.position.z += 0.125
+
+        # waypoints.append(copy.deepcopy(init))
+
+        # (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.01, 0.0)
+        # plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        # self.move_group.execute(plan, wait = True)
+
+        # waypoints = []
+
+
+
+
+
+        # init = self.move_group.get_current_pose().pose
+        # init.position.y += 0.125
+
+        # waypoints.append(copy.deepcopy(init))
+        # (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.01, 0.0)
+        # self.move_group.execute(plan, wait = True)
+
+        # waypoints = []
+
+        # init = self.move_group.get_current_pose().pose
+
+        # init.position.x += 0.25
+
+        # waypoints.append(copy.deepcopy(init))
+
+        # (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.01, 0.0)
+        # self.move_group.execute(plan, wait = True)
+
+
+
+        '''
+        self.move_group.shift_pose_target(2, 0.125)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
+
+
+
+        self.move_group.shift_pose_target(1, 0.25)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
+
+
+
+
+
+
+        pose_goal = Pose()
+        pose_goal.position.x = x - 0.05
+        pose_goal.position.y = y 
+        pose_goal.position.z = z
+        pose_goal.orientation.w = w_pose 
+
+
+        self.move_group.set_pose_target(pose_goal)
+        success,traj,pose_time,errorcode = self.move_group.plan()
+
+        #self.move_group.go(pose_goal,wait=True)
+        #self.move_group.stop()
+        #self.move_group.clear_pose_targets()
+
+
+
+        print (">>>> Printing robot pose")
+        print (self.move_group.get_current_pose())
+
+
+
+        self.move_group.shift_pose_target(0, 0.25)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
+
+
+        current = self.move_group.get_current_pose()
+        xCurrent = current.pose.position.x
+        yCurrent = current.pose.position.y
+        zCurrent = current.pose.position.z 
+
+        x_poseCurrent = current.pose.orientation.x
+        y_poseCurrent = current.pose.orientation.y 
+        z_poseCurrent = current.pose.orientation.z 
+        w_poseCurrent = current.pose.orientation.w 
+
+        print (">>>> Printing robot pose")
+        print (self.move_group.get_current_pose())
+        '''
+
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    rospy.init_node("gripper") #Initialize the node
+    rospy.wait_for_message('move_group/status', GoalStatusArray)
+    Mover = mover()
