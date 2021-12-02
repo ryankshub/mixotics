@@ -121,13 +121,14 @@ class Vision:
             frame_name = 'ingredient03_tag'
         elif name == 'coffee':
             frame_name = 'ingredient04_tag'
+        elif name == 'cup':
+            frame_name = 'cup_tag'
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
         # camera_bottle_tf.header.frame_id = f'{name}_frame'
-        camera_bottle_tf.header.frame_id = frame_name
-        camera_bottle_tf.child_frame_id = 'camera_color_optical_frame'
-
+        camera_bottle_tf.header.frame_id = 'camera_color_optical_frame'
+        camera_bottle_tf.child_frame_id = frame_name
         # adjust to center
         camera_bottle_tf.transform.translation.x = xyz[0]
         camera_bottle_tf.transform.translation.y = xyz[1]
