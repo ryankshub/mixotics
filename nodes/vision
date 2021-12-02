@@ -122,11 +122,7 @@ class Vision:
         elif name == 'coffee':
             frame_name = 'ingredient04_tag'
         elif name == 'cup':
-<<<<<<< HEAD
             frame_name = 'cup_tag'
-=======
-            frame_name = 'cup'
->>>>>>> fe4ec1864204bc58c590e1b761fd8b3b00c9abac
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
