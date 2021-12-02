@@ -1,0 +1,7 @@
+# Request/Response for pouring service
+# Tells the robot where to pour ingredient and how much to pour
+
+uint8 cup_id    # Cup to pour amount into
+uint8 amount_ml # amount to pour
+---
+# Empty Response

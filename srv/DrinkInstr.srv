@@ -1,6 +1,0 @@
-# Request for controller/drink_instr service
-# Given an encoded list of orders, return order_number mapping to orders
-uint16 instr_id
-uint16[2] drink_order
----
-# Empty Response. The repsonse from this should come as a VerifyInstr
