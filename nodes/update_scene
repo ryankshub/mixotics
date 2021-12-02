@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """ 
-Node for adding objects marked by apriltags to planning scene
+Node for adding objects marked by apriltags or color detection to planning scene
 
 SERVICES:
-  + update_scene/refresh (final_project_mixotics/Refresh) - refreshes the scene with updated object positions and returns whether or not all objects were detected
+  + update_scene/refresh (final_project_mixotics/Refresh) - refreshes scene with updated dynamic object positions and returns whether or not all objects were detected
+  + update_scene/static (final_project_mixotics/Refresh) - refreshes scene with updated static object positions and returns whether or not all objects were detected
 """
 import sys
 import rospy
@@ -18,7 +19,7 @@ from rospkg import RosPack
 
 class SceneUpdater:
     """
-    Updates poses of scene objects using apriltag and known object geometries
+    Updates poses of scene objects using apriltag or color detection and known object geometries
     """
     def __init__(self):
         # Check for parameters
@@ -33,7 +34,10 @@ class SceneUpdater:
         self.camera_frame = rospy.get_param("/camera_frame", "camera")
 
         # Find model file for squeeze bottle and compute static transform
-        self.stl = RosPack().get_path("final_project_mixotics") + "/models/squeeze_bottle_origin.STL"
+        if self.color:
+            self.stl = RosPack().get_path("final_project_mixotics") + "/models/squeeze_bottle_v2.STL"
+        else:
+            self.stl = RosPack().get_path("final_project_mixotics") + "/models/squeeze_bottle_tag_v2.STL"
 
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('update_scene')
@@ -46,7 +50,7 @@ class SceneUpdater:
         self.update_scene = rospy.Service("update_scene/refresh", Refresh, self.scene_callback)
         self.update_fixed = rospy.Service("update_scene/fixed", Refresh, self.fixed_callback)
         
-        # Create static broadcaster and to define transform between static robot tag and camera
+        # Create static broadcaster and define transform between static robot tag and camera
         self.static_broadcaster = tf2_ros.StaticTransformBroadcaster()
         self.tag_camera_tf = TransformStamped()
         self.tag_camera_tf.header.frame_id = "panda_tag_static"
@@ -61,7 +65,7 @@ class SceneUpdater:
 
     def scene_callback(self, req):
         """
-        Callback for update_scene/refresh service (generates planning scene objects based on apriltag tf)
+        Callback for update_scene/refresh service (generates dynamic planning scene objects (i.e., ingredients, coasters) based on apriltag or color tf)
         """
         # Check transform from robot tag to camera and set static robot tag frame
         self.tag_check = {}
@@ -126,15 +130,13 @@ class SceneUpdater:
                     obj.header.frame_id = self.frame_id
                     obj.pose.position.x = trans.transform.translation.x
                     obj.pose.position.y = trans.transform.translation.y
-                    obj.pose.position.z = trans.transform.translation.z - (0.5*self.b_h) # bottle center is offset by height of the bottle
+                    obj.pose.position.z = trans.transform.translation.z - (0.5*self.b_h) - (0.5*0.0025)# bottle center is offset by height of the bottle and apriltag
 
                     if self.color:
                         obj.pose.position.z = trans.transform.translation.z # bottle center is marked by tape
-                        quat = transformations.quaternion_from_euler(pi, 0, 0) # correct bottle pitch based on .stl file
+                        quat = transformations.quaternion_from_euler(pi/2, 0, 0) # correct bottle pitch based on .stl file
                     else:
-                        rot = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
-                        eul = transformations.euler_from_quaternion(rot)
-                        quat = transformations.quaternion_from_euler(eul[0]+(pi/2), eul[1], eul[2]) # correct bottle pitch based on .stl file
+                        quat = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
                     
                     obj.pose.orientation = Quaternion(*quat)
                     #self.scene.add_cylinder(i_name, obj, height=self.b_h, radius=self.b_r)
@@ -185,11 +187,10 @@ class SceneUpdater:
                     obj.header.frame_id = self.frame_id
                     obj.pose.position.x = trans.transform.translation.x
                     obj.pose.position.y = trans.transform.translation.y
-                    obj.pose.position.z = trans.transform.translation.z - 0.00125 # offset for coaster
-                    obj.pose.orientation.x = trans.transform.rotation.x
-                    obj.pose.orientation.y = trans.transform.rotation.y
-                    obj.pose.orientation.z = trans.transform.rotation.z
-                    obj.pose.orientation.w = trans.transform.rotation.w
+                    obj.pose.position.z = trans.transform.translation.z - (0.5*0.0025) # offset for coaster
+
+                    quat = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
+                    obj.pose.orientation = Quaternion(*quat)
 
                     self.scene.add_box(c_name, obj, size=(self.c_d, self.c_d, 0.0025))
 
@@ -221,7 +222,7 @@ class SceneUpdater:
 
     def fixed_callback(self, req):
         """
-        Callback for update_scene/fixed service (generates fixed planning scene objects (tables, panda_tag) based on apriltag tf)
+        Callback for update_scene/fixed service (generates fixed planning scene objects (i.e., tables, panda_tag) based on apriltag tf)
         """
         # Check transform from robot tag to camera and set static robot tag frame
         self.tag_check = {}
@@ -288,10 +289,9 @@ class SceneUpdater:
                     obj.pose.position.x = trans.transform.translation.x
                     obj.pose.position.y = trans.transform.translation.y
                     obj.pose.position.z = trans.transform.translation.z - (0.5 * t_d[t_n][2])
-                    obj.pose.orientation.x = trans.transform.rotation.x
-                    obj.pose.orientation.y = trans.transform.rotation.y
-                    obj.pose.orientation.z = trans.transform.rotation.z
-                    obj.pose.orientation.w = trans.transform.rotation.w
+
+                    quat = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
+                    obj.pose.orientation = Quaternion(*quat)
 
                     self.scene.add_box(c_name, obj, size=(t_d[t_n][0], t_d[t_n][1], t_d[t_n][2]))
 
