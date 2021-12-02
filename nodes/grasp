@@ -6,6 +6,6 @@ if __name__ == '__main__':
     rospy.init_node('grasp')
     client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
     client.wait_for_server()
-    goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.025, 0.025), speed = 0.015, force = 12)
+    goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.035, 0.035), speed = 0.005, force = 4)
     client.send_goal(goal)
     client.wait_for_result(rospy.Duration.from_sec(5.0))
