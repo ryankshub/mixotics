@@ -7,15 +7,14 @@ project(final_project_mixotics)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+## System dependencies are found with CMake's conventions
 find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
+  message_generation
+  moveit_msgs
   rospy
   std_msgs
-  message_generation
 )
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -59,7 +58,9 @@ add_service_files(
   Order.srv
   InventoryUpdate.srv
   VerifyInstr.srv
-  DrinkInstr.srv
+  PourInstr.srv
+  SetInstr.srv
+  Refresh.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -72,7 +73,9 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
+  std_msgs  # Or other packages containing msgs 
+  moveit_msgs
+  geometry_msgs 
 )
 
 ################################################
@@ -104,11 +107,13 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES final_project_mixotics
- CATKIN_DEPENDS rospy std_msgs message_runtime
-#  DEPENDS system_lib
+
+catkin_package(CATKIN_DEPENDS
+  rospy
+  std_msgs
+  geometry_msgs
+  message_runtime
+  moveit_msgs
 )
 
 ###########
@@ -162,7 +167,14 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  nodes/order_handler
+  nodes/hominggoal    #testing node
+  nodes/gripper       #testing node
+  nodes/gripperopen   #testing node
+  nodes/grasp         #testing node
+  nodes/fixed_tag     
+  nodes/update_scene
+  nodes/mover
+  nodes/squeeze       #testing node
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -191,7 +203,7 @@ catkin_install_python(PROGRAMS
 # install(FILES
 #   # myfile1
 #   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
 #############

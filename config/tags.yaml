@@ -19,10 +19,11 @@
 #   ]
 standalone_tags:
   [
-    {id: 0, size: 0.03, name: "ingredient1"},
-    {id: 1, size: 0.03, name: "ingredient2"},
-    {id: 2, size: 0.03, name: "ingredient3"},
-    {id: 3, size: 0.03, name: "drink1"}
+    {id: 0, size: 0.03, name: "ingredient01_tag"},
+    {id: 1, size: 0.03, name: "ingredient02_tag"},
+    {id: 2, size: 0.03, name: "ingredient03_tag"},
+    {id: 3, size: 0.03, name: "ingredient04_tag"},
+    {id: 4, size: 0.06, name: "panda_tag"}
   ]
 # ## Tag bundle definitions
 # ### Remarks
