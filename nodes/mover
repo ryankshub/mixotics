@@ -173,7 +173,7 @@ class mover():
                 return self.wait_for_state_update(box_is_known=True, timeout=timeout)
 
 
-    def readyPos(self, ingredient="ingredient03"):
+    def readyPos(self):
 
         '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
             Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
