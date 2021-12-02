@@ -27,11 +27,7 @@
   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="initial_reset" value="true"/>
     <arg name="camera" default="$(arg camera_name)"/>
-<<<<<<< HEAD
     <arg name="align_depth" value="true"/>
-=======
-    <arg name="align_depth" default="true"/>
->>>>>>> fe4ec1864204bc58c590e1b761fd8b3b00c9abac
   </include>
 
   <!-- Node for converted raw, calibrated image to rectified image -->
