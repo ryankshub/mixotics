@@ -1,4 +1,4 @@
-#! usr/bin/env python
+#!/usr/bin/env python3
 
 from rosgraph.roslogging import RospyLogger
 import rospy
