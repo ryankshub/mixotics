@@ -12,43 +12,46 @@
   <!-- Load list of ingredients -->
   <rosparam command="load" file="$(find final_project_mixotics)/config/objects.yaml" />
   <param name="camera_frame" value="$(arg camera_frame)"/>
+  <param name="use_color" value="$(arg use_color)"/>
 
-  <!-- Optional run with real robot and scene updates-->
-  <group if="$(eval arg('demo') ==false)">
-    <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
-    <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
-    <node name="vision" pkg="final_project_mixotics" type="vision"/>
-  </group>
-
+  <!-- Nodes for identifying scene objects -->
+  <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
+  <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
+  
   <!-- Optional demo with panda_moveit_config and update_scene node-->
   <group if="$(eval arg('demo') ==true)">
     <include file="$(find panda_moveit_config)/launch/demo.launch"/>
-    <!-- Nodes for identifying scene objects -->
-    <node name="fixed_tag" pkg="final_project_mixotics" type="fixed_tag"/>
-    <node name="update_scene" pkg="final_project_mixotics" type="update_scene"/>
-    <node name="vision" pkg="final_project_mixotics" type="vision"/>
   </group>
   
   <!-- Launch RealSense camera -->
   <include file="$(find realsense2_camera)/launch/rs_camera.launch">
     <arg name="initial_reset" value="true"/>
     <arg name="camera" default="$(arg camera_name)"/>
+    <arg name="align_depth" default="true"/>
   </include>
 
   <!-- Node for converted raw, calibrated image to rectified image -->
   <node name="image_proc" pkg="image_proc" type="image_proc" ns="$(arg camera_name)/color"/>
 
-  <!-- Set parameters and node for april tag detection (default settings detect first 4 tags of size 30 mm in materials/tag36h11_30mm.pdf) -->
+  <!-- Set parameters and node for april tag detection -->
   <rosparam command="load" file="$(find final_project_mixotics)/config/settings.yaml" ns="$(arg node_namespace)" />
-  <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)" if="$(eval arg('use_color') == 'false')"/>
-  <rosparam command="load" file="$(find final_project_mixotics)/config/tags_color.yaml" ns="$(arg node_namespace)" if="$(eval arg('use_color') == 'true')"/>
   
+  <!-- Use standard tags for pure tag detections-->
+  <group if="$(eval arg('use_color') ==false)">
+    <rosparam command="load" file="$(find final_project_mixotics)/config/tags.yaml" ns="$(arg node_namespace)"/>
+  </group>
+
+  <!-- Change the configured tags and run node for color detection -->
+  <group if="$(eval arg('use_color') ==true)">
+    <rosparam command="load" file="$(find final_project_mixotics)/config/tags_color.yaml" ns="$(arg node_namespace)"/>
+    <node name="vision" pkg="final_project_mixotics" type="vision"/>
+  </group>
+
   <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
     <!-- Remap topics from those used in code to those on the ROS network -->
     <remap from="image_rect" to="/$(arg camera_name)/color/$(arg image_topic)" />
     <remap from="camera_info" to="/$(arg camera_name)/color/camera_info" />
-
-    <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
+    <param name="publish_tag_detections_image" type="bool" value="true" />
   </node>
 
 </launch>

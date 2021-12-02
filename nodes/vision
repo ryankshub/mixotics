@@ -51,10 +51,10 @@ class Vision:
         except:
             return False
 
-        if (len(self.color_image) == 0): 
+        if (len(color_image) == 0): 
             rospy.logerr('MISSING COLOR IMAGE')
             return False
-        elif (len(self.depth_image) == 0):
+        elif (len(depth_image) == 0):
             rospy.logerr('MISSING DEPTH IMAGE')
             return False
 
@@ -121,6 +121,8 @@ class Vision:
             frame_name = 'ingredient03_tag'
         elif name == 'coffee':
             frame_name = 'ingredient04_tag'
+        elif name == 'cup':
+            frame_name = 'cup'
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
