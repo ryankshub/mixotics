@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! usr/bin/env python
 
 from rosgraph.roslogging import RospyLogger
 import rospy
@@ -59,20 +59,39 @@ class mover():
         self.approach()
         
         self.grasp()
+
+        #rospy.sleep(10)
+
+        #print("Time to squeeze")
+
+        #self.squeeze()
+
+        #rospy.sleep(15)
         
+        #print ("Time to release")
+
+        #self.gripperopen()
+
+
         self.movetopour()
 
         self.tilt()
+
+        rospy.sleep(3)
         
-        #self.squeeze()
+        self.squeeze()
 
         self.untilt()
         
-        #self.grasp()
+        self.grasp()
         
         self.movetodrop()
+
+        rospy.sleep(10)
         
         self.gripperopen()
+
+        rospy.sleep(5)
 
         self.retract()
 
@@ -182,11 +201,12 @@ class mover():
         '''   
         while self.close != True:
 
-            self.desiredIngredient = "ingredient02"
+            self.desiredIngredient = "ingredient04"
             pos = self.scene.get_object_poses([self.desiredIngredient])
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
             self.x = pos[self.desiredIngredient].position.x
+            self.x = self.x + 0.005
             self.y = pos[self.desiredIngredient].position.y
             self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
             self.z = pos[self.desiredIngredient].position.z
@@ -237,9 +257,9 @@ class mover():
         current = self.move_group.get_current_pose().pose #Current position for pos shift
 
         self.current_pose = self.move_group.get_current_pose() #Current position for pos shift
-        self.xCurrent = current_pose.pose.position.x
-        self.yCurrent = current_pose.pose.position.y
-        self.zCurrent = current_pose.pose.position.z
+        self.xCurrent = self.current_pose.pose.position.x
+        self.yCurrent = self.current_pose.pose.position.y
+        self.zCurrent = self.current_pose.pose.position.z
 
         waypoints = []   
 
@@ -268,16 +288,20 @@ class mover():
  
     
     def grasp(self):
+
+        #Soft initial grasp
         
         client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
         client.wait_for_server()
-        goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.035, 0.035), speed = 0.005, force = 5)
+        goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.045, 0.045), speed = 0.005, force = 2)
         client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5.0))
+        client.wait_for_result(rospy.Duration.from_sec(15.0))
         return[]
 
         
     def movetopour(self):
+
+        #Take apriltag coordinates of the drink location, navigate to an offset from it
 
         self.desiredLocation = "ingredient01"       #Change ingredient name as required
         pos_pour = self.scene.get_object_poses([self.desiredLocation])
@@ -323,26 +347,20 @@ class mover():
         return []
         
     def squeeze(self):
+
+        #Using graspgoal action to squeeze
      
-        client2 = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
-        client2.wait_for_server()
+        client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
+        client.wait_for_server()
         goal = GraspGoal(width = 0.002, epsilon = GraspEpsilon(0.1, 0.1), speed = 3, force = 20)
-        client2.send_goal(goal)
-        client2.wait_for_result(rospy.Duration.from_sec(5.0))
+        client.send_goal(goal)
+        client.wait_for_result(rospy.Duration.from_sec(15.0))
 
         return []
         
     def movetodrop(self):
 
-#         self.desiredLocation = "ingredient02"       #Change ingredient name as required
-#         pos_pour = self.scene.get_object_poses([self.desiredLocation])
-
-# # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
-#         self.x_pour = pos_pour[self.desiredLocation].position.x
-#         self.y_pour = pos_pour[self.desiredLocation].position.y
-#         self.y_pour = self.y_pour+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
-#         self.z_pour = pos_pour[self.desiredLocation].position.z
-#         self.z_pour = self.z_pour+0.175 #Offset on z so we can pour rom above
+        #Return to the initial pickup location
         
         
         current = self.move_group.get_current_pose().pose #Current position for pos shift
@@ -359,7 +377,7 @@ class mover():
         current.position.x += self.x-xCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
 
@@ -367,18 +385,21 @@ class mover():
         current.position.y += self.y-yCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
         
         waypoints = []   
         current.position.z += self.z-zCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
         return[]
 
-    def tilt(self):              
+    def tilt(self):      
+
+        #Sends a joint angle command to tilt the gripper before squeezing        
         joint_goal = self.move_group.get_current_joint_values()
         joint_goal[5] = joint_goal[5]+pi/6
         self.move_group.go(joint_goal, wait=True)
@@ -386,7 +407,9 @@ class mover():
 
         return[]
 
-    def untilt(self):              
+    def untilt(self):    
+
+        #Untilt to return the bottle to a flat          
         joint_goal = self.move_group.get_current_joint_values()
         joint_goal[5] = joint_goal[5]-pi/6
         self.move_group.go(joint_goal, wait=True)
@@ -396,6 +419,8 @@ class mover():
         
         
     def gripperopen(self):
+
+        #Open the grippers to deposit the bottle
         
         client3 = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
         client3.wait_for_server()
@@ -406,6 +431,8 @@ class mover():
         return[]
 
     def retract(self):
+
+        #Retract to close to the initial location to get ready for the next pour
 
         current = self.move_group.get_current_pose().pose #Current position for pos shift
         waypoints = []
