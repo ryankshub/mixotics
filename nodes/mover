@@ -36,64 +36,29 @@ class mover():
         group_name = "panda_arm"
 
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        
         self.move_gripper = moveit_commander.MoveGroupCommander('hand')
 
-        planning_frame = self.move_group.get_planning_frame()
+        self.planning_frame = self.move_group.get_planning_frame()
         
         #display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 
-        self.waypoints = []
+        self.waypoints = [] #Initialize empty waypoint list for moveit trajectory to append
 
-        self.box_name = ""
+        self.box_name = "" 
 
-        # self.scene = scene
+        self.close = False #Initialize gripper to be open at the beginning
 
-        self.planning_frame = planning_frame
+        self.add_table() #Add table which robot is on
 
-        self.close = False
+        self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        self.add_table()
+        self.approach() #Approach to ingredient done
 
-        self.add_hitBox()
-
-        self.approach()
+        self.pour()     #Takes ingrdient and pours it into cup
         
-        self.grasp()
+        self.refresh()  #Takes ingrdient back to stocking area and resets arm back into ready position
 
-        #rospy.sleep(10)
-
-        #print("Time to squeeze")
-
-        #self.squeeze()
-
-        #rospy.sleep(15)
-        
-        #print ("Time to release")
-
-        #self.gripperopen()
-
-
-        self.movetopour()
-
-        self.tilt()
-
-        rospy.sleep(3)
-        
-        self.squeeze()
-
-        self.untilt()
-        
-        self.grasp()
-        
-        self.movetodrop()
-
-        rospy.sleep(10)
-        
-        self.gripperopen()
-
-        rospy.sleep(5)
-
-        self.retract()
 
 
 
@@ -471,6 +436,38 @@ class mover():
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25)
         self.move_group.execute(plan, wait = True)
         return[]
+
+    def pour(self):
+
+        self.grasp() #Initial grasp of ingredient
+
+        self.movetopour()
+
+        self.tilt()
+
+        rospy.sleep(3)
+        
+        self.squeeze()
+
+        self.untilt()
+        
+        self.grasp()
+
+        return[]
+
+    def refresh(self):
+
+        self.movetodrop()
+
+        rospy.sleep(10)
+        
+        self.gripperopen()
+
+        rospy.sleep(5)
+
+        self.retract()
+
+        return []
 
 
 if __name__ == "__main__":
