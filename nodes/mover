@@ -103,9 +103,9 @@ class mover():
         ):
 
             '''The wait_for_state_update function is taken and modified from the interbotix example, and is neccesary for the mover class to be able to intialize its 
-                its other functions without breaking the rviz simulation due to prematurely loading parameters. 
-                Inside the function calls are made that allow for variables to wait for initialization so that the program runs in an order which does not allow for
-                it to break.
+               its other functions without breaking the rviz simulation due to prematurely loading parameters. 
+               Inside the function calls are made that allow for variables to wait for initialization so that the program runs in an order which does not allow for
+               it to break.
             '''
 
             table_name = self.table_name
@@ -138,9 +138,9 @@ class mover():
     
     def add_hitBox(self, timeout=4):
 
-                '''The add_box function is neccesary for the mover class to add an obstacle within Rviz when intiated.
-                    Inside the function the variables for creating an obstacle are defined, the definition is based on user
-                    input which comes from the reset node. 
+                '''The add_hitBox function is neccesary for the mover class to add an obstacle within Rviz when intiated.
+                   Inside the function the variables for creating an obstacle are defined, this allows for the robot movement 
+                   to be limited with respect to the collision box of the robot.  
                 '''    
 
                 rospy.sleep(2)
@@ -171,10 +171,9 @@ class mover():
     def add_table(self, timeout=4):
 
                 '''The add_table function is neccesary for the mover class to add a surface within Rviz when intiated.
-                    Inside the function the variables for creating a surface are defined so that objects do not fall through 
-                    when simulated   
-                '''    
-
+                   Inside the function the variables for creating a surface are defined so that objects do not fall through 
+                   when simulated  and for the robot movement to be limited with respect the table.  
+                '''       
                 rospy.sleep(2)
                 table_name = self.box_name
                 scene = self.scene
@@ -194,11 +193,11 @@ class mover():
 
     def readyPos(self):
 
-        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
-            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-            environment. The user has the option to do so repeatedly or only once. 
+        '''The readyPos function is neccesary for the mover class to allow for the panda arm to get in its ready position.
+           The pre-set ready position makes it easier for a robot to make a plan to go to the location of the ingredients,
+           as well as the location of the cups in which it must pour the drink. 
         '''   
+
         while self.close != True:
 
             self.desiredIngredient = "ingredient04"
@@ -228,7 +227,6 @@ class mover():
 
             if err.val == 1:
 
-
                 rospy.loginfo("yeeha")
 
                 self.move_group.execute(traj_msg, wait=True)
@@ -248,10 +246,9 @@ class mover():
 
     def readyGrab(self):
 
-        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
-            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-            environment. The user has the option to do so repeatedly or only once. 
+        '''The readyGrab function serves the purpose of allowing the arm to shift its pose so that it gets from the initial position 
+           to one that is alligned with the desired ingredient it must pick up. Once that is done it removes the desired ingredient
+           from the rviz model so that the robot does not detect a collision when grabbing the object. 
         '''   
 
         current = self.move_group.get_current_pose().pose #Current position for pos shift
@@ -281,6 +278,10 @@ class mover():
 
     def approach(self):
 
+        '''The approach function combines the readyPos and readyGrab functions into a single service that can be called by the user to
+           execute the the functions with respect to a desired ingredient. 
+        '''   
+
         self.readyPos()
         self.readyGrab()
 
@@ -288,6 +289,10 @@ class mover():
  
     
     def grasp(self):
+
+        '''The grasp function is the initial soft grasp that the robot executes on a desired ingredient for it to be picked up, which will 
+           later be moved to the pouring station where it will pour liquid into requested cups.
+        '''
 
         #Soft initial grasp
         
@@ -300,6 +305,10 @@ class mover():
 
         
     def movetopour(self):
+
+        '''The movetopour function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
+           from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
+        '''
 
         #Take apriltag coordinates of the drink location, navigate to an offset from it
 
@@ -347,6 +356,9 @@ class mover():
         return []
         
     def squeeze(self):
+        
+        '''The squeeze function is the hard grasp that the robot executes on a desired ingredient for it to squeeze the liquid into a cup.
+        '''
 
         #Using graspgoal action to squeeze
      
@@ -360,8 +372,11 @@ class mover():
         
     def movetodrop(self):
 
+        '''The movetodrop function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
+           from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
+        '''
+
         #Return to the initial pickup location
-        
         
         current = self.move_group.get_current_pose().pose #Current position for pos shift
         current_pose = self.move_group.get_current_pose() #Current position for pos shift
@@ -397,7 +412,11 @@ class mover():
 
         return[]
 
-    def tilt(self):      
+    def tilt(self):   
+
+        '''The tilt function is responsible for tilting the ingredient a certain amount (experimentally determined), so as to get a steady
+           pour into the cup.
+        '''   
 
         #Sends a joint angle command to tilt the gripper before squeezing        
         joint_goal = self.move_group.get_current_joint_values()
@@ -408,6 +427,9 @@ class mover():
         return[]
 
     def untilt(self):    
+
+        '''The untilt function is responsible for lifting the ingredient back to a neutral position so as to stop the flow of liquid into the cup.
+        ''' 
 
         #Untilt to return the bottle to a flat          
         joint_goal = self.move_group.get_current_joint_values()
@@ -420,6 +442,10 @@ class mover():
         
     def gripperopen(self):
 
+        '''The gripperoper function is responsible opening the end-effector gripper to release the cup so that it can it deposit the bottle
+           once it has reached the storage area.
+        ''' 
+
         #Open the grippers to deposit the bottle
         
         client3 = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
@@ -431,6 +457,9 @@ class mover():
         return[]
 
     def retract(self):
+
+        '''The retract function is responsible getting back to the initial location to get ready for the next grab & pour sequence.
+        ''' 
 
         #Retract to close to the initial location to get ready for the next pour
 
