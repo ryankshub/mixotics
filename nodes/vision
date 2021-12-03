@@ -27,6 +27,14 @@ class Vision:
         self.intrinsics = None
         self.color_image = []
         self.depth_image = []
+
+        self.thresholds = {
+            'blue': (np.array([15, 225, 20]), np.array([35, 255, 255])),
+            'green': (np.array([35, 80, 20]), np.array([55, 255, 255])),
+            'yellow': (np.array([75, 75, 20]), np.array([95, 255, 255])),
+            'orange': (np.array([110, 100, 20]), np.array([120, 255, 255])),
+        }
+
         self.r = rospy.Rate(100)
 
 
@@ -43,7 +51,10 @@ class Vision:
             depth = depth_image[y-5:y+5, x-5:x+5]
 
         depth = np.average(depth)
-        return depth        
+        return depth
+
+    def check_cups(self, color_image):
+        return        
 
     def get_position(self, color_image, depth_image, intrinsics):
         try:
@@ -58,17 +69,17 @@ class Vision:
             rospy.logerr('MISSING DEPTH IMAGE')
             return False
 
-        # water = blue, sugar = green, lemon = yellow, 
-        # coffee = orange, cup = red
-        thresholds = {
-            'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            'sugar': (np.array([35, 80, 20]), np.array([55, 255, 255])),
-            'lemon': (np.array([75, 75, 20]), np.array([95, 255, 255])),
-            'coffee': (np.array([110, 100, 20]), np.array([120, 255, 255])),
-        }
-
         bottle_pos = {}
-        for k, v in thresholds.items():
+        for k, v in self.thresholds.items():
+
+            if k == 'blue':
+                k = 'water'
+            elif k == 'green':
+                k = 'sugar'
+            elif k == 'yellow':
+                k = 'lemon'
+            elif k == 'orange':
+                k = 'coffee'
 
             mask = cv2.inRange(hsv_image, v[0], v[1])
 
@@ -140,6 +151,7 @@ class Vision:
         camera_bottle_tf.transform.rotation.z = 0
         camera_bottle_tf.transform.rotation.w = 1
         rospy.logerr(name)
+
         if name == 'water':
             self.water_broadcaster.sendTransform(camera_bottle_tf)
         elif name == 'sugar':
