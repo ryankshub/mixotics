@@ -100,7 +100,8 @@ class Vision:
                 point = rs.rs2_deproject_pixel_to_point(intrinsics, [cx, cy], depth)
 
                 bottle_pos[k] = [p/1000 for p in point]
-                self.show_image(dilate, 'HSV')
+
+                self.show_image(dilate, k)
 
         return bottle_pos
 
@@ -179,7 +180,7 @@ class Vision:
         self.intrinsics = intrinsics
         
     def show_image(self, img, img_name):
-        cv2.namedWindow(img_name, 1)
+        cv2.namedWindow(img_name, cv2.WINDOW_NORMAL)
         cv2.imshow(img_name, img)
         cv2.waitKey(3)
 
