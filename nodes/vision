@@ -23,7 +23,7 @@ class Vision:
         self.coffee_broadcaster = tf2_ros.TransformBroadcaster()
         self.cup_broadcaster = tf2_ros.TransformBroadcaster()
 
-        self.bridge = CvBridge()
+        self.bridge = CvBridge()    
         self.intrinsics = None
         self.color_image = []
         self.depth_image = []
@@ -63,9 +63,9 @@ class Vision:
         thresholds = {
             'water': (np.array([15, 225, 20]), np.array([35, 255, 255])),
             'sugar': (np.array([35, 70, 20]), np.array([55, 255, 255])),
-            'lemon': (np.array([75, 75, 20]), np.array([95, 255, 255])),
-            'coffee': (np.array([100, 75, 20]), np.array([120, 255, 255])),
-            'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
+            # 'lemon': (np.array([75, 75, 20]), np.array([95, 255, 255])),
+            # 'coffee': (np.array([100, 75, 20]), np.array([120, 255, 255])),
+            # 'cup': (np.array([120, 100, 20]), np.array([140, 255, 255]))
         }
 
         bottle_pos = {}
