@@ -23,10 +23,10 @@ class Vision:
         self.coffee_broadcaster = tf2_ros.TransformBroadcaster()
         self.cup_broadcaster = tf2_ros.TransformBroadcaster()
 
-        self.bridge = CvBridge()
+        self.bridge = CvBridge()    
         self.intrinsics = None
-        self.color_image = None
-        self.depth_image = None
+        self.color_image = []
+        self.depth_image = []
         self.r = rospy.Rate(100)
 
 
@@ -49,6 +49,13 @@ class Vision:
         try:
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
         except:
+            return False
+
+        if (len(color_image) == 0): 
+            rospy.logerr('MISSING COLOR IMAGE')
+            return False
+        elif (len(depth_image) == 0):
+            rospy.logerr('MISSING DEPTH IMAGE')
             return False
 
         # water = blue, sugar = green, lemon = yellow, 
@@ -106,11 +113,22 @@ class Vision:
     def broadcast(self, xyz, name):
         camera_bottle_tf = TransformStamped()
 
+        if name == 'water':
+            frame_name = 'ingredient01_tag'
+        elif name == 'sugar':
+            frame_name = 'ingredient02_tag'
+        elif name == 'lemon':
+            frame_name = 'ingredient03_tag'
+        elif name == 'coffee':
+            frame_name = 'ingredient04_tag'
+        elif name == 'cup':
+            frame_name = 'cup_tag'
+
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
-        camera_bottle_tf.header.frame_id = f'{name}_frame'
-        camera_bottle_tf.child_frame_id = 'camera_color_optical_frame'
-
+        # camera_bottle_tf.header.frame_id = f'{name}_frame'
+        camera_bottle_tf.header.frame_id = 'camera_color_optical_frame'
+        camera_bottle_tf.child_frame_id = frame_name
         # adjust to center
         camera_bottle_tf.transform.translation.x = xyz[0]
         camera_bottle_tf.transform.translation.y = xyz[1]
@@ -143,9 +161,10 @@ class Vision:
     def depth_callback(self, img):
         try:
             depth_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
+            self.depth_image = depth_image
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        self.depth_image = depth_image
+        
 
     def intr_callback(self, intr):
         intrinsics = rs.intrinsics()

@@ -1,0 +1,7 @@
+ingredient_list: ["ingredient01", "ingredient02", "ingredient03", "ingredient04"] # list of ingredient names
+coaster_list: ["coaster01", "coaster02", "coaster03"] # list of coaster names
+table_list: [] # list of tables
+bottle_height: 0.1215 # height of bottle (meters)
+bottle_radius: 0.024 # radius of bottle (meters)
+coaster_dim: 0.04 # length and width of coaster square (meters)
+table_dim: [[]] #list of table dimensions (xyz meters)
