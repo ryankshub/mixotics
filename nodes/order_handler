@@ -6,7 +6,9 @@
 from final_project_mixotics.srv import Order, OrderResponse
 from final_project_mixotics.srv import InventoryUpdate, InventoryUpdateRepsonse
 from final_project_mixotics.srv import VerifyInstr, VerifyInstrResponse
-from final_project_mixotics.srv import DrinkInstr, DrinkInstrRequest
+from final_project_mixotics.srv import PourInstr, PourInstrRequest
+from final_project_mixotics.srv import SetInstr, SetInstrRequest
+from final_project_mixotics.srv import ConfirmOrder, ConfirmOrderRequest
 from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
 from menu_utilities.menu_parser import parse_menu_xml
 # Python imports
@@ -30,7 +32,13 @@ class OrderHandler:
         verify_instr VerifyInstr
 
     CLIENTS:
-        drink_instr DrinkInstr
+        grab_instr SetInstr
+
+        pour_instr PourInstr
+
+        release_instr SetInstr
+
+        confirm_order ConfirmOrder
 
     PARAMS:
         + filepath menu.xml ~ filepath to the current menu configuration file.
@@ -53,7 +61,10 @@ class OrderHandler:
         self._invUp_service = rospy.Service('update_inventory', InventoryUpdate, self._handle_invUp_service)
         self._verify_service = rospy.Service('verify_instr', VerifyInstr, self._handle_verify_service)
         # Set up clients
-        self._cmd_client = rospy.ServiceProxy('drink_instr', DrinkInstr)
+        self._grab_client = rospy.ServiceProxy('grab_instr', SetInstr)
+        self._pour_client = rospy.ServiceProxy('pour_instr', PourInstr)
+        self._release_client = rospy.ServiceProxy('release_instr', SetInstr)
+        self._confirm_order_client = rospy.ServiceProxy('confirm_order', ConfirmOrder)
         # Parse Menu file
         self._menu_dict = parse_menu_xml(self.menu_path)
         # Build StoreRoom 
@@ -64,7 +75,6 @@ class OrderHandler:
                     self._storeroom[ingredient.value] = True
         # Init Instruction Queue
         self._instr_queue = []
-        self._instr_counter = 1
         # Init Active Instruction
         self._active_instr = None
         self._active_complete = False
@@ -73,7 +83,6 @@ class OrderHandler:
         self._new_order_num = 1 # Start orders at 1
         self._ORDER_LIMIT = 100 # Max number of simulatanous orders
         
-
         # Set up run rate and main function
         self._RATE = 20 # in Hz
         self._time_delta = 1./self._RATE
@@ -118,12 +127,47 @@ class OrderHandler:
         return InventoryUpdateRepsonse()
 
     def _handle_verify_service(self, req):
+        """
+        Verifies if instruction was done correctly
+        """
         pass
 
-    def _send_cmd(self, instr):
-        rospy.wait_for_service("drink_instr")
+    def _send_grab(self, instr_id, instr):
+        """
+        Request robot grab ingredient
+        """
+        req = SetInstr(instr_id=instr_id,
+                       ingredient_enum=instr[1].value)
+        rospy.wait_for_service("grab_instr")
         try:
-            self._cmd_client(instr[0], instr[1])
+            self._grab_client(req)
+        except rospy.ServiceException as e:
+            print(f"Can't talk to robot")
+            rospy.logerr(e)
+
+    def _send_pour(self, instr_id, instr):
+        """
+        Request robot to pour ingredient into cup
+        """
+        rospy.wait_for_service("pour_instr")
+        req = PourInstr(instr_id=instr_id,
+                        cup_id=instr[1],
+                        amount_ml=instr[2])
+        try:
+            self._pour_client(req)
+        except rospy.ServiceException as e:
+            print(f"Can't talk to robot")
+            rospy.logerr(e)
+    
+    def _send_release(self, instr_id, instr):
+        """
+        Request robot to place ingredient back
+        """
+        req = SetInstr(instr_id=instr_id,
+                       ingredient_enum = instr[1].value)
+        rospy.wait_for_service("release_instr")
+        try:
+            self._release_client(req)
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
@@ -136,24 +180,25 @@ class OrderHandler:
         if len(self._new_orders) > 0:
             # if new_order, process order queue
             self._instr_queue = self._parse_orders()
-        # Check if active_order exist
-        if self._active_instr is None:
+        # Check if active_order doesn't exist or active_order complete
+        # It true, set and send new active order
+        if self._active_instr is None or self._active_complete:
             if len(self._instr_queue) > 0:
-                instr_id = self._instr_counter
-                self._instr_counter += 1
-                self._active_instr = (instr_id, self._instr_queue.pop(0))
+                instr_id, self._active_instr = self._instr_queue.pop(0)
                 self._active_complete = False
-                self._send_cmd(self._active_instr)
+                if self._active_instr[0] == InstrEnum.GRAB:
+                    self._send_grab(instr_id, self._active_instr)
+                elif self._active_instr[0] == InstrEnum.POUR:
+                    self._send_pour(instr_id, self._active_instr)
+                elif self._active_instr[0] == InstrEnum.RELEASE:
+                    self._send_release(instr_id, self._active_instr)
+                elif self._active_instr[0] == InstrEnum.DELIVERY:
+                    # Mark the order_tracker complete
+                    pass
+                else:
+                    # Actions we currently don't support go here
+                    pass
 
-        # Check if active_order is done
-        # If done, send new active order
-        if self._active_complete:
-            if len(self._instr_queue) > 0:
-                instr_id = self._instr_counter
-                self._instr_counter += 1
-                self._active_instr = (instr_id, self._instr_queue.pop(0))
-                self._active_complete = False
-                self._send_cmd(self._active_instr)
         # If done, check order num is served
         # TODO: If order num is done, announce order up
         pass

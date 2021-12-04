@@ -61,6 +61,7 @@ add_service_files(
   PourInstr.srv
   SetInstr.srv
   Refresh.srv
+  ConfirmOrder.srv
 )
 
 ## Generate actions in the 'action' folder
