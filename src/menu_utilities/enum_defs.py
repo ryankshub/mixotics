@@ -19,14 +19,16 @@ class InstrEnum(Enum):
     PREP ~ Prepare a cup for client's drink
     GRAB ~ Grab a certain ingredient
     POUR ~ Pour grabbed ingredient
+    RELEASE ~ Release grabbed ingredient
     MIX ~ Mix current ingredients in client's cup
-    DELIVER ~ Give cup to client
+    DELIVER ~ Give cup to client (Indicate cup is done)
     """
     PREP = 0
     GRAB = 1
     POUR = 2
-    MIX = 3
-    DELIVER = 4
+    RELEASE = 3
+    MIX = 4
+    DELIVER = 5
 
 ## StoreRoom Enum
 class StoreRoomEnum(Enum):
