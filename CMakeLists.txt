@@ -9,17 +9,17 @@ project(final_project_mixotics)
 ## is used, also find other catkin packages
 ## System dependencies are found with CMake's conventions
 find_package(catkin REQUIRED COMPONENTS
-  rospy
-  message_generation
-  std_msgs
   geometry_msgs
+  message_generation
   moveit_msgs
+  rospy
+  std_msgs
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -54,8 +54,13 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate services in the 'srv' folder
 add_service_files(
-   FILES
-   Refresh.srv
+  FILES
+  Order.srv
+  InventoryUpdate.srv
+  VerifyInstr.srv
+  PourInstr.srv
+  SetInstr.srv
+  Refresh.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -104,6 +109,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
 catkin_package(CATKIN_DEPENDS
+  rospy
   std_msgs
   geometry_msgs
   message_runtime
@@ -161,9 +167,14 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
+  nodes/hominggoal    #testing node
+  nodes/gripper       #testing node
+  nodes/gripperopen   #testing node
+  nodes/grasp         #testing node
+  nodes/fixed_tag     
   nodes/update_scene
-  nodes/fixed_tag
   nodes/mover
+  nodes/squeeze       #testing node
   nodes/vision
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -193,7 +204,7 @@ catkin_install_python(PROGRAMS
 # install(FILES
 #   # myfile1
 #   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
 #############
@@ -207,4 +218,6 @@ catkin_install_python(PROGRAMS
 # endif()
 
 ## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if (CATKIN_ENABLE_TESTING)
+  catkin_add_nosetests(test)
+endif()

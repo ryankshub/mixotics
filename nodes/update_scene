@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ 
 Node for adding objects marked by apriltags or color detection to planning scene
 

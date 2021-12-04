@@ -1,0 +1,48 @@
+<!-- Menu Configuration File -->
+
+<menu>
+    <drink>
+        <name>water</name>
+        <ingredients>
+            <ingredient>water</ingredient>
+        </ingredients>
+        <recipe>
+            <instr>Prep</instr>
+            <instr item="water">Grab</instr>
+            <instr>Pour</instr>
+            <instr>Deliver</instr>
+        </recipe>
+    </drink>
+    <drink>
+        <name>lemonade</name>
+        <ingredients>
+            <ingredient>water</ingredient>
+            <ingredient>lemon</ingredient>
+        </ingredients>
+        <recipe>
+            <instr>Prep</instr>
+            <instr item="water">Grab</instr>
+            <instr>Pour</instr>
+            <instr item="lemon">Grab</instr>
+            <instr>Pour</instr>
+            <instr>Mix</instr>
+            <instr>Deliver</instr>
+        </recipe>
+    </drink>
+    <drink>
+        <name>icedtea</name>
+        <ingredients>
+            <ingredient>water</ingredient>
+            <ingredient>tea</ingredient>
+        </ingredients>
+        <recipe>
+            <instr>Prep</instr>
+            <instr item="water">Grab</instr>
+            <instr>Pour</instr>
+            <instr item="tea">Grab</instr>
+            <instr>Pour</instr>
+            <instr>Mix</instr>
+            <instr>Deliver</instr>
+        </recipe>
+    </drink>
+</menu>
