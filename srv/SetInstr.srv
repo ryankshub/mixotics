@@ -1,0 +1,5 @@
+# Request/Response for grab and release service
+# Tells robot which ingredient to grab/release
+# Enum values can be found in python_pkg menu_utilities.enum_defs
+
+uint8 ingredient_enum

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Create a static transform between the Franka Emika (Panda) apriltag and the world frame
 """
