@@ -91,7 +91,7 @@ class Vision:
             if len(contours) > 0:
                 c_bottle = max(contours, key=cv2.contourArea)
                 # c_cup = max(contours.remove(max(contours)), key=cv2.contourArea)
-                rospy.logerr(max([cv2.contourArea(c) for c in contours].remove(max([cv2.contourArea(c) for c in contours])))
+                # rospy.logerr(max([cv2.contourArea(c) for c in contours].remove(max([cv2.contourArea(c) for c in contours])))
                 m = cv2.moments(c_bottle)
                 cx = int(m['m10']/(m['m00']+ 0.00001))
                 cy = int(m['m01']/(m['m00']+ 0.00001))
