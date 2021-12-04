@@ -23,8 +23,8 @@ This package contains:
     1. `menu.xml`: configuration file for the menu including the recipe instructions for each drink
     2. `objects.yaml`: contains list of names for ingredients, coasters and tables (optional) as well as associated object dimensions
     3. `settings.yaml`: contains AprilTag code parameters such as tag family name and detection parameters
-    4. 'tags_color.yaml': contains list of AprilTag IDs and sizes for each object (used with CV color detection)
-    5. 'tags_color.yaml': contains list of AprilTag IDs and sizes for each object (used without CV color detection)
+    4. `tags_color.yaml`: contains list of AprilTag IDs and sizes for each object (used with CV color detection)
+    5. `tags.yaml`: contains list of AprilTag IDs and sizes for each object (used without CV color detection)
 - launch: 
     1. `tag_finder.launch`: sets up the nodes for object detection and planning scene updates using a RealSense d435i camera
     2. 
@@ -47,7 +47,7 @@ This package contains:
     * Hello There!
 
 ## **Dependencies and Installation**
-Add info for mixotics.rosinstall installation 
+Add info for `mixotics.rosinstall` installation 
 
 ### *ROS Dependencies*
 This package was developed and tested in ros-noetic. TODO
