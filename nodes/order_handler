@@ -193,7 +193,7 @@ class OrderHandler:
                 elif self._active_instr[0] == InstrEnum.RELEASE:
                     self._send_release(instr_id, self._active_instr)
                 elif self._active_instr[0] == InstrEnum.DELIVERY:
-                    # Mark the order_tracker complete
+                    # Check if order is done
                     pass
                 else:
                     # Actions we currently don't support go here
