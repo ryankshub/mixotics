@@ -36,13 +36,11 @@ class mover():
         group_name = "panda_arm"
 
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
-        
+
         self.move_gripper = moveit_commander.MoveGroupCommander('hand')
 
         self.planning_frame = self.move_group.get_planning_frame()
         
-        #display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
-
         self.waypoints = [] #Initialize empty waypoint list for moveit trajectory to append
 
         self.box_name = "" 
@@ -58,9 +56,6 @@ class mover():
         self.pour()     #Takes ingrdient and pours it into cup
         
         self.refresh()  #Takes ingrdient back to stocking area and resets arm back into ready position
-
-
-
 
 
     def wait_for_state_update(
@@ -174,12 +169,6 @@ class mover():
             self.y = pos[self.desiredIngredient].position.y
             self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
             self.z = pos[self.desiredIngredient].position.z
-
-#Gripper wasn't working last time so it has been commented out
-
-            # self.move_gripper.set_named_target('open')   
-
-            # self.move_gripper.go(wait=True)
             
 
 #Do not change, these are the joints neccesary to grip glass 
@@ -473,5 +462,5 @@ class mover():
 if __name__ == "__main__":
         rospy.init_node("mover") #Initialize the node
         rospy.wait_for_message('move_group/status', GoalStatusArray)
-        Mover = mover()
-        #rospy.spin() #Keep running 
+        Mover = mover() #Call the node
+        #rospy.spin() #Keep running forever
