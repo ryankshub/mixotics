@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! usr/bin/env python
 
 from rosgraph.roslogging import RospyLogger
 import rospy
@@ -36,47 +36,26 @@ class mover():
         group_name = "panda_arm"
 
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
+
         self.move_gripper = moveit_commander.MoveGroupCommander('hand')
 
-        planning_frame = self.move_group.get_planning_frame()
+        self.planning_frame = self.move_group.get_planning_frame()
         
-        #display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+        self.waypoints = [] #Initialize empty waypoint list for moveit trajectory to append
 
-        self.waypoints = []
+        self.box_name = "" 
 
-        self.box_name = ""
+        self.close = False #Initialize gripper to be open at the beginning
 
-        # self.scene = scene
+        self.add_table() #Add table which robot is on
 
-        self.planning_frame = planning_frame
+        self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        self.close = False
+        self.approach() #Approach to ingredient done
 
-        self.add_table()
-
-        self.add_hitBox()
-
-        self.approach()
+        self.pour()     #Takes ingrdient and pours it into cup
         
-        self.grasp()
-        
-        self.movetopour()
-
-        self.tilt()
-        
-        #self.squeeze()
-
-        self.untilt()
-        
-        #self.grasp()
-        
-        self.movetodrop()
-        
-        self.gripperopen()
-
-        self.retract()
-
-
+        self.refresh()  #Takes ingrdient back to stocking area and resets arm back into ready position
 
 
     def wait_for_state_update(
@@ -84,9 +63,9 @@ class mover():
         ):
 
             '''The wait_for_state_update function is taken and modified from the interbotix example, and is neccesary for the mover class to be able to intialize its 
-                its other functions without breaking the rviz simulation due to prematurely loading parameters. 
-                Inside the function calls are made that allow for variables to wait for initialization so that the program runs in an order which does not allow for
-                it to break.
+               its other functions without breaking the rviz simulation due to prematurely loading parameters. 
+               Inside the function calls are made that allow for variables to wait for initialization so that the program runs in an order which does not allow for
+               it to break.
             '''
 
             table_name = self.table_name
@@ -119,9 +98,9 @@ class mover():
     
     def add_hitBox(self, timeout=4):
 
-                '''The add_box function is neccesary for the mover class to add an obstacle within Rviz when intiated.
-                    Inside the function the variables for creating an obstacle are defined, the definition is based on user
-                    input which comes from the reset node. 
+                '''The add_hitBox function is neccesary for the mover class to add an obstacle within Rviz when intiated.
+                   Inside the function the variables for creating an obstacle are defined, this allows for the robot movement 
+                   to be limited with respect to the collision box of the robot.  
                 '''    
 
                 rospy.sleep(2)
@@ -152,10 +131,9 @@ class mover():
     def add_table(self, timeout=4):
 
                 '''The add_table function is neccesary for the mover class to add a surface within Rviz when intiated.
-                    Inside the function the variables for creating a surface are defined so that objects do not fall through 
-                    when simulated   
-                '''    
-
+                   Inside the function the variables for creating a surface are defined so that objects do not fall through 
+                   when simulated  and for the robot movement to be limited with respect the table.  
+                '''       
                 rospy.sleep(2)
                 table_name = self.box_name
                 scene = self.scene
@@ -175,27 +153,22 @@ class mover():
 
     def readyPos(self):
 
-        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
-            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-            environment. The user has the option to do so repeatedly or only once. 
+        '''The readyPos function is neccesary for the mover class to allow for the panda arm to get in its ready position.
+           The pre-set ready position makes it easier for a robot to make a plan to go to the location of the ingredients,
+           as well as the location of the cups in which it must pour the drink. 
         '''   
+
         while self.close != True:
 
-            self.desiredIngredient = "ingredient02"
+            self.desiredIngredient = "ingredient04"
             pos = self.scene.get_object_poses([self.desiredIngredient])
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
             self.x = pos[self.desiredIngredient].position.x
+            self.x = self.x + 0.005
             self.y = pos[self.desiredIngredient].position.y
             self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
             self.z = pos[self.desiredIngredient].position.z
-
-#Gripper wasn't working last time so it has been commented out
-
-            # self.move_gripper.set_named_target('open')   
-
-            # self.move_gripper.go(wait=True)
             
 
 #Do not change, these are the joints neccesary to grip glass 
@@ -207,7 +180,6 @@ class mover():
             success, traj_msg, planTime, err = self.move_group.plan()
 
             if err.val == 1:
-
 
                 rospy.loginfo("yeeha")
 
@@ -228,18 +200,17 @@ class mover():
 
     def readyGrab(self):
 
-        '''The follow function is neccesary for the mover class to allow for the px100 arm to follow the waypoints that are saved in a yaml file. 
-            Inside the function the go function provided by the interbotix team is used to follow waypoints to reach a desired target. This
-            function can then be called as the <follow> service which allows users to go to their desired location, within a simulated or a real
-            environment. The user has the option to do so repeatedly or only once. 
+        '''The readyGrab function serves the purpose of allowing the arm to shift its pose so that it gets from the initial position 
+           to one that is alligned with the desired ingredient it must pick up. Once that is done it removes the desired ingredient
+           from the rviz model so that the robot does not detect a collision when grabbing the object. 
         '''   
 
         current = self.move_group.get_current_pose().pose #Current position for pos shift
 
         self.current_pose = self.move_group.get_current_pose() #Current position for pos shift
-        self.xCurrent = current_pose.pose.position.x
-        self.yCurrent = current_pose.pose.position.y
-        self.zCurrent = current_pose.pose.position.z
+        self.xCurrent = self.current_pose.pose.position.x
+        self.yCurrent = self.current_pose.pose.position.y
+        self.zCurrent = self.current_pose.pose.position.z
 
         waypoints = []   
 
@@ -261,6 +232,10 @@ class mover():
 
     def approach(self):
 
+        '''The approach function combines the readyPos and readyGrab functions into a single service that can be called by the user to
+           execute the the functions with respect to a desired ingredient. 
+        '''   
+
         self.readyPos()
         self.readyGrab()
 
@@ -268,16 +243,28 @@ class mover():
  
     
     def grasp(self):
+
+        '''The grasp function is the initial soft grasp that the robot executes on a desired ingredient for it to be picked up, which will 
+           later be moved to the pouring station where it will pour liquid into requested cups.
+        '''
+
+        #Soft initial grasp
         
         client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
         client.wait_for_server()
-        goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.035, 0.035), speed = 0.005, force = 5)
+        goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.045, 0.045), speed = 0.005, force = 2)
         client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5.0))
+        client.wait_for_result(rospy.Duration.from_sec(15.0))
         return[]
 
         
     def movetopour(self):
+
+        '''The movetopour function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
+           from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
+        '''
+
+        #Take apriltag coordinates of the drink location, navigate to an offset from it
 
         self.desiredLocation = "ingredient01"       #Change ingredient name as required
         pos_pour = self.scene.get_object_poses([self.desiredLocation])
@@ -323,27 +310,27 @@ class mover():
         return []
         
     def squeeze(self):
+        
+        '''The squeeze function is the hard grasp that the robot executes on a desired ingredient for it to squeeze the liquid into a cup.
+        '''
+
+        #Using graspgoal action to squeeze
      
-        client2 = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
-        client2.wait_for_server()
+        client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
+        client.wait_for_server()
         goal = GraspGoal(width = 0.002, epsilon = GraspEpsilon(0.1, 0.1), speed = 3, force = 20)
-        client2.send_goal(goal)
-        client2.wait_for_result(rospy.Duration.from_sec(5.0))
+        client.send_goal(goal)
+        client.wait_for_result(rospy.Duration.from_sec(15.0))
 
         return []
         
     def movetodrop(self):
 
-#         self.desiredLocation = "ingredient02"       #Change ingredient name as required
-#         pos_pour = self.scene.get_object_poses([self.desiredLocation])
+        '''The movetodrop function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
+           from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
+        '''
 
-# # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
-#         self.x_pour = pos_pour[self.desiredLocation].position.x
-#         self.y_pour = pos_pour[self.desiredLocation].position.y
-#         self.y_pour = self.y_pour+0.1 #Offset so it does not hit gripper, only works with specific input from objects 
-#         self.z_pour = pos_pour[self.desiredLocation].position.z
-#         self.z_pour = self.z_pour+0.175 #Offset on z so we can pour rom above
-        
+        #Return to the initial pickup location
         
         current = self.move_group.get_current_pose().pose #Current position for pos shift
         current_pose = self.move_group.get_current_pose() #Current position for pos shift
@@ -359,7 +346,7 @@ class mover():
         current.position.x += self.x-xCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.5)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
 
@@ -367,18 +354,25 @@ class mover():
         current.position.y += self.y-yCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
-        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
         
         waypoints = []   
         current.position.z += self.z-zCurrent
         waypoints.append(copy.deepcopy(current))
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
+        plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
         return[]
 
-    def tilt(self):              
+    def tilt(self):   
+
+        '''The tilt function is responsible for tilting the ingredient a certain amount (experimentally determined), so as to get a steady
+           pour into the cup.
+        '''   
+
+        #Sends a joint angle command to tilt the gripper before squeezing        
         joint_goal = self.move_group.get_current_joint_values()
         joint_goal[5] = joint_goal[5]+pi/6
         self.move_group.go(joint_goal, wait=True)
@@ -386,7 +380,12 @@ class mover():
 
         return[]
 
-    def untilt(self):              
+    def untilt(self):    
+
+        '''The untilt function is responsible for lifting the ingredient back to a neutral position so as to stop the flow of liquid into the cup.
+        ''' 
+
+        #Untilt to return the bottle to a flat          
         joint_goal = self.move_group.get_current_joint_values()
         joint_goal[5] = joint_goal[5]-pi/6
         self.move_group.go(joint_goal, wait=True)
@@ -396,6 +395,12 @@ class mover():
         
         
     def gripperopen(self):
+
+        '''The gripperoper function is responsible opening the end-effector gripper to release the cup so that it can it deposit the bottle
+           once it has reached the storage area.
+        ''' 
+
+        #Open the grippers to deposit the bottle
         
         client3 = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
         client3.wait_for_server()
@@ -407,6 +412,11 @@ class mover():
 
     def retract(self):
 
+        '''The retract function is responsible getting back to the initial location to get ready for the next grab & pour sequence.
+        ''' 
+
+        #Retract to close to the initial location to get ready for the next pour
+
         current = self.move_group.get_current_pose().pose #Current position for pos shift
         waypoints = []
         current.position.y += 0.25
@@ -416,9 +426,41 @@ class mover():
         self.move_group.execute(plan, wait = True)
         return[]
 
+    def pour(self):
+
+        self.grasp() #Initial grasp of ingredient
+
+        self.movetopour()
+
+        self.tilt()
+
+        rospy.sleep(3)
+        
+        self.squeeze()
+
+        self.untilt()
+        
+        self.grasp()
+
+        return[]
+
+    def refresh(self):
+
+        self.movetodrop()
+
+        rospy.sleep(10)
+        
+        self.gripperopen()
+
+        rospy.sleep(5)
+
+        self.retract()
+
+        return []
+
 
 if __name__ == "__main__":
         rospy.init_node("mover") #Initialize the node
         rospy.wait_for_message('move_group/status', GoalStatusArray)
-        Mover = mover()
-        #rospy.spin() #Keep running 
+        Mover = mover() #Call the node
+        #rospy.spin() #Keep running forever
