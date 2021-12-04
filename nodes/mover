@@ -9,7 +9,7 @@ import geometry_msgs.msg
 from moveit_commander.conversions import pose_to_list
 from rospy.core import rospydebug
 from std_srvs.srv import EmptyResponse, Empty, SetBoolResponse, SetBool
-#from arm_move.srv import step, follow, reset, resetResponse
+# from final_project_mixotics.srv import approach, refresh, pour
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
@@ -51,12 +51,17 @@ class mover():
 
         self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        self.approach() #Approach to ingredient done
+        self.grab() #Approach to ingredient done
+
+        # self.grab = rospy.Service("grab", grab, self.grab)
 
         self.pour()     #Takes ingrdient and pours it into cup
-        
-        self.refresh()  #Takes ingrdient back to stocking area and resets arm back into ready position
 
+        # self.pour() = rospy.Service("pour", pour, self.pour)
+        
+        self.stock()  #Takes ingrdient back to stocking area and resets arm back into ready position
+
+        # self.stock() = rospy.Service("stock", stock, self.stock)
 
     def wait_for_state_update(
             self, box_is_known=False, box_is_attached=False, timeout=4
@@ -232,17 +237,6 @@ class mover():
         self.move_group.execute(plan, wait = True)
 
         return []
-
-    def approach(self):
-
-        '''The approach function combines the readyPos and readyGrab functions into a single service that can be called by the user to
-           execute the the functions with respect to a desired ingredient. 
-        '''   
-
-        self.readyPos()
-        self.readyGrab()
-
-        return []
  
     
     def grasp(self):
@@ -404,7 +398,7 @@ class mover():
         client3.wait_for_server()
         goal = MoveGoal(width = 0.080, speed = 0.15)
         client3.send_goal(goal)
-        client3.wait_for_result(rospy.Duration.from_sec(20.0))
+        client3.wait_for_result(rospy.Duration.from_sec(30.0))
 
         # client3.wait_for_result(rospy.Duration.from_sec(5.0))
         rospy.loginfo("end gripOpen")
@@ -417,7 +411,6 @@ class mover():
         ''' 
 
         #Retract to close to the initial location to get ready for the next pour
-        rospy.loginfo("start retract")
         current = self.move_group.get_current_pose().pose #Current position for pos shift
         waypoints = []
         current.position.y += 0.25
@@ -425,12 +418,22 @@ class mover():
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25)
         self.move_group.execute(plan, wait = True)
-        rospy.loginfo("end retract")
         return[] 
 
-    def pour(self):
+    def grab(self):
 
+        '''The grab function combines the readyPos and readyGrab functions into a single service that can be called by the user to
+           execute the the functions with respect to a desired ingredient. 
+        '''   
+
+        self.readyPos()
+        self.readyGrab()
         self.grasp() #Initial grasp of ingredient
+
+
+        return []
+
+    def pour(self):
 
         self.movetopour()
 
@@ -446,15 +449,15 @@ class mover():
 
         return[]
 
-    def refresh(self):
+    def stock(self):
 
         self.movetodrop()
 
-        rospy.sleep(10)
+        # rospy.sleep(10)
         
         self.gripperopen()
 
-        rospy.sleep(3)
+        # rospy.sleep(3)
 
         self.retract()
 
