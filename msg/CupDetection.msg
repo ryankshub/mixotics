@@ -1,0 +1,1 @@
+bool[] cup_status # array showing which slots are open/filled (open if False)
