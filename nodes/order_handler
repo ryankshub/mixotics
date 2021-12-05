@@ -9,7 +9,7 @@ from final_project_mixotics.srv import VerifyInstr, VerifyInstrResponse
 from final_project_mixotics.srv import PourInstr, PourInstrRequest
 from final_project_mixotics.srv import SetInstr, SetInstrRequest
 from final_project_mixotics.srv import ConfirmOrder, ConfirmOrderRequest
-from menu_utilities.enum_defs import InstrEnum, StoreRoomEnum
+from menu_utilities.enum_defs import InstrEnum
 from menu_utilities.menu_parser import parse_menu_xml
 from menu_utilities.order_tracker import OrderTracker
 
@@ -153,6 +153,7 @@ class OrderHandler:
                 cup_ids = self._order_tracker.get_cup_ids(order_num)
                 self._send_failed_orders(order_num, cup_ids)
                 self._order_tracker.verify_results(req.instr_id, False)
+        return VerifyInstrResponse()
 
 
 
@@ -160,8 +161,8 @@ class OrderHandler:
         """
         Request robot grab ingredient
         """
-        req = SetInstr(instr_id=instr_id,
-                       ingredient_enum=instr[1].value)
+        req = SetInstrRequest(instr_id=instr_id,
+                              ingredient_enum=instr[1].value)
         rospy.wait_for_service("grab_instr")
         try:
             self._grab_client(req)
@@ -175,9 +176,9 @@ class OrderHandler:
         Request robot to pour ingredient into cup
         """
         rospy.wait_for_service("pour_instr")
-        req = PourInstr(instr_id=instr_id,
-                        cup_id=instr[1],
-                        amount_ml=instr[2])
+        req = PourInstrRequest(instr_id=instr_id,
+                               cup_id=instr[1].value,
+                               amount_ml=instr[2])
         try:
             self._pour_client(req)
         except rospy.ServiceException as e:
@@ -189,8 +190,8 @@ class OrderHandler:
         """
         Request robot to place ingredient back
         """
-        req = SetInstr(instr_id=instr_id,
-                       ingredient_enum = instr[1].value)
+        req = SetInstrRequest(instr_id=instr_id,
+                              ingredient_enum = instr[1].value)
         rospy.wait_for_service("release_instr")
         try:
             self._release_client(req)
@@ -205,9 +206,9 @@ class OrderHandler:
         """
         msg = f"Order {order_num} Complete! Please pick up " + \
             f"{[str(drink) + ' at ' + str(cup_id) for drink, cup_id in zip(drink_names,cup_ids)]}"
-        req = ConfirmOrder(order_num=order_num,
-                           success=True,
-                           msg=msg)
+        req = ConfirmOrderRequest(order_num=order_num,
+                                  success=True,
+                                  msg=msg)
         rospy.wait_for_service("confirm_order")
         try:
             _ = self._confirm_order(req)
@@ -222,9 +223,9 @@ class OrderHandler:
         """
         msg = f"Oh no! Order {order_num} could not be completed! " + \
             f"We apologize! Please clear {[str(x)+', ' for x in cup_ids]}"
-        req = ConfirmOrder(order_num=order_num,
-                           success=False,
-                           msg=msg)
+        req = ConfirmOrderRequest(order_num=order_num,
+                                  success=False,
+                                  msg=msg)
         rospy.wait_for_service("confirm_order")
         try:
             _ = self._confirm_order(req)
