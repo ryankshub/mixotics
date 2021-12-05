@@ -4,6 +4,7 @@
 
 # Project imports
 from menu_utilities.enum_defs import InstrEnum
+
 # Python imports
 
 # 3rd-party imports
@@ -77,26 +78,27 @@ class OrderTracker:
         new_instr_batch = []
         # While there are open slots, process
         while len(self._avail_slots) > 0 and len(self._backlog) > 0:
-            order = self._backlog.pop(0)
-            self._status[order[0]] = []
-            for recipe in order[1]:
-                idx = len(self._status[order[0]])
-                instr_id = self._instr_counter
-                self._instr_counter = (self._instr_counter % self._MAX_INSTR) + 1
-                cup_id = self._grab_slot()
-                self._status[order[0]].append((False, cup_id))
-                for step in recipe:
-                    instr = (order[0], idx, cup_id, instr_id, step)
-                    new_instr_batch.append(instr)
+            # Get top drink in log and unpack values
+            drink = self._backlog.pop(0)
+            order_num = drink[0]
+            idx = drink[1]
+            recipe = drink[2]
+            # Set instr_id
+            instr_id = self._instr_counter
+            self._instr_counter = (self._instr_counter % self._MAX_INSTR) + 1
+            # Grab open cup slot
+            cup_id = self._grab_slot()
+            # Split recipe for instruction processing
+            for step in recipe:
+                instr = (order_num, idx, cup_id, instr_id, step)
+                new_instr_batch.append(instr)
         
         # Check if safe to integrate new instrs 
         # or just append them
-        modify_bool = False
-        if len(self._instr_queue) > 0 and \
+        modify_bool = len(self._instr_queue) > 0 and \
             (self._instr_queue[0][-1][0] == InstrEnum.GRAB or \
              self._instr_queue[0][-1][0] == InstrEnum.POUR or \
-             self._instr_queue[0][-1][0] == InstrEnum.DELIVERY):
-            modify_bool = True
+             self._instr_queue[0][-1][0] == InstrEnum.DELIVERY)
 
         self._parse_instr_batch(new_instr_batch, modify_bool)
 
@@ -216,12 +218,29 @@ class OrderTracker:
         Adds new orders to backlog and triggers processing.
 
         Args:
-            list of tuples (int, [recipes]) new_orders:
+            list of tuples (int, [drink_names], [recipes]) new_orders:
                 A list of tuples where the first element is a postive order 
-                number and the second elem is a list of recipes
+                number, the second elem is a list of drink names, and 
+                the final elem is a corresponding list of recipes
+        Mods:
+            list of tuples (order_num, order_idx, recipe) backlog:
+                Adds new orders to backlog
         """
         # Add new orders to backlog
-        self._backlog += new_orders
+        parsed_orders = []
+        for order in new_orders:
+            # Split tuples
+            order_num = order[0]
+            order_names = order[1]
+            order_recipes = order[2]
+            # Set up status
+            self._status[order_num] = []
+            for i, name in enumerate(order_names):
+                # Log drink into tracker
+                idx = len(self._status[order_num])
+                self._status[order_num].append(False, name, order_recipes[i])
+                parsed_orders.append((order_num, idx, order_recipes[i]))
+        self._backlog += parsed_orders
         self._process_orders()
 
 
@@ -262,9 +281,31 @@ class OrderTracker:
                 self._status[order_num][idx][0] = True
             else:
                 # Clean object of bad order
-                self._status.pop(order_num)
+                tainted_order = self._status.pop(order_num)
+                # Release cups
+                tainted_cups_ids = [x[2] for x in tainted_order if x[2] > 0]
+                for cup_id in tainted_cups_ids:
+                    self._release_slot(cup_id)
+                # Clear instruction queue
                 self._instr_queue = [x for x in self._instr_queue if x[0] != order_num]
+                # Clear backlog
                 self._backlog = [x for x in self._backlog if x[0] != order_num]
+
+
+    def get_cup_ids(self, order_num):
+        """
+        Given an order number, returns the occupied cup_slots for orders
+
+        Args:
+            int order_num:
+                Positive number for 
+        """
+        order_info = self._status.get(order_num, None)
+        if order_info is None:
+            return []
+        # We only care about cup_ids being taken, i.e. non-zero
+        cup_ids = [x[2] for x in order_info if x[2] > 0]
+        return cup_ids
 
 
     def is_order_complete(self, order_num=None):
@@ -285,19 +326,28 @@ class OrderTracker:
                 element is a list of cup_ids corresponding to the orders
         """
         if order_num is not None:
-            bools = [x[0] for x in self._status.get(order_num, [(False, 0)])]
-            cup_ids = [x[1] for x in self._status.get(order_num, [(False, 0)])]
+            # Grab status and cup_ips for order
+            bools = [x[0] for x in self._status.get(order_num, [(False, 'NUL', 0)])]
+            drink_names = [x[1] for x in self._status.get(order_num, [False, 'NUL', 0])]
+            cup_ids = [x[2] for x in self._status.get(order_num, [(False, 'NUL', 0)])]
+            # If all cups in order are finished
             if all(bools):
+                # Clear tracker, release slots and process orders
                 self._status.pop(order_num)
                 for cup_id in cup_ids:
                     self._release_slot(cup_id)
-                return (order_num, cup_ids)
+                self._process_orders()
+                return (order_num, drink_names, cup_ids)
         else:
+            # Check each and every order
             for order in self._status.keys():
-                bools = [x[0] for x in self._status.get(order_num, [(False, 0)])]
-                cup_ids = [x[1] for x in self._status.get(order_num, [(False, 0)])]
+                bools = [x[0] for x in self._status.get(order, [(False, 'NUL', 0)])]
+                drink_names = [x[1] for x in self._status.get(order_num, [False, 'NUL', 0])]
+                cup_ids = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 if all(bools):
                     self._status.pop(order_num)
                     for cup_id in cup_ids:
                         self._release_slot(cup_id)
-                    return (order_num, cup_ids)
+                    return (order_num, drink_names, cup_ids)
+        
+        return (0, [], [])
