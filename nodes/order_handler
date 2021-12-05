@@ -87,6 +87,7 @@ class OrderHandler:
         self._new_orders = []
         self._new_order_num = 1 # Start orders at 1
         self._ORDER_LIMIT = 100 # Max number of simulatanous orders
+        self._CUP_SLOTS = 4
         
         # Set up run rate and main function
         self._RATE = 20 # in Hz
@@ -103,6 +104,9 @@ class OrderHandler:
         valid_order = True
         error_str = ""
         order_recipes = []
+        if len(req.orders) > self._CUP_SLOTS:
+            error_str += "No more than {self._CUP_SLOTS} can be ordered at a time\n"
+            valid_order = False
         for order in req.orders:
             # Check if order is on menu
             if order not in self._menu_dict.keys():
