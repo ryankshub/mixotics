@@ -34,6 +34,12 @@ class MixGui:
         # Set up clients
         self._process_client = rospy.ServiceProxy('process_order', Order)
 
+    def _handle_confirm_service(self, req):
+        """
+        Display to client when order is complete
+        """
+        pass
+
 
 # Activate 'mix_gui' node
 def main():
