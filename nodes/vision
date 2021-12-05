@@ -8,6 +8,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
 import tf2_ros
+from enum_defs import StoreRoomEnum as sre
 
 
 class Vision:
@@ -27,6 +28,20 @@ class Vision:
         self.intrinsics = None
         self.color_image = []
         self.depth_image = []
+
+        self.ingredient_ids = {
+            'water': sre.WATER,
+            'sugar': sre.SUGAR,
+            'lemon': sre.LEMON,
+            'tea': sre.TEA
+            }
+
+        self.color_to_ing = {
+            'blue': 'water',
+            'green': 'sugar',
+            'yellow': 'lemon',
+            'orange': 'tea'
+        }
 
         self.thresholds = {
             'blue': (np.array([15, 225, 20]), np.array([35, 255, 255])),
@@ -69,15 +84,6 @@ class Vision:
         bottle_pos = {}
         for k, v in self.thresholds.items():
 
-            if k == 'blue':
-                ing = 'water'
-            elif k == 'green':
-                ing = 'sugar'
-            elif k == 'yellow':
-                ing = 'lemon'
-            elif k == 'orange':
-                ing = 'coffee'
-
             mask = cv2.inRange(hsv_image, v[0], v[1])
 
             res = cv2.bitwise_and(color_image, color_image, mask=mask)
@@ -108,9 +114,9 @@ class Vision:
 
                 point = rs.rs2_deproject_pixel_to_point(intrinsics, [cx, cy], depth)
 
-                bottle_pos[ing] = [p/1000 for p in point]
+                bottle_pos[self.color_to_ing[k]] = [p/1000 for p in point]
 
-                self.show_image(dilate, ing)
+                self.show_image(dilate, self.color_to_ing[k])
 
         return bottle_pos
 
