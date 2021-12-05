@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+""" 
+Broadcasts transforms for ingredient bottles and determines if there is 
+room for another order (cup) in the prep area. 
+
+SUBSCRIBERS:
+  + sub_color (Image) ~ raw color image array
+  + sub_depth (Image) ~ aligned depth to color image array
+  + sub_intr (Image) ~ camera intrinsics
+
+"""
+
 import rospy
 import cv2
 from sensor_msgs.msg import Image, CameraInfo
@@ -12,23 +23,49 @@ from enum_defs import StoreRoomEnum as sre
 
 
 class Vision:
+    """ Class for detecting cups and ingredients by color.
+
+    :param sub_color: Subscriber for /camera/color/image_raw topic
+    :param sub_depth: Subscriber for /camera/aligned_depth_to_color/image_raw topic
+    :param sub_intr: Subscriber for /camera/depth/camera_info topic
+    :param water_broadcaster: Transform broadcaster for water bottle
+    :param sugar_broadcaster: Transform broadcaster for sugar bottle
+    :param lemon_broadcaster: Transform broadcaster for lemon bottle
+    :param tea_broadcaster: Transform broadcaster for tea bottle
+    :param bridge: Converts between ROS Image messages and OpenCV images
+    :param intrinsics: Stores camera intrinsics
+    :param color_image: Color image array from camera
+    :param depth_image: Aligned depth to color image array from camera
+    :param ingredient_ids: Dictionary mapping ingredient names to ID as defined in enum_defs.StoreRoomEnum
+    :param color_to_ing: Dictionary mapping colors to ingredient names
+    :param thresholds: Dictionary mapping colors to HSV threshold range for masking
+    """
+    
+
     
     def __init__(self):
+        """Initializes necessary parameters for vision object."""
+
+        # Subscribers for image data and intrinsics
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
         self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)\
-
+        
+        # Broadcasters for bottle and cup tfs
         self.water_broadcaster = tf2_ros.TransformBroadcaster()
         self.sugar_broadcaster = tf2_ros.TransformBroadcaster()
         self.lemon_broadcaster = tf2_ros.TransformBroadcaster()
-        self.coffee_broadcaster = tf2_ros.TransformBroadcaster()
-        self.cup_broadcaster = tf2_ros.TransformBroadcaster()
+        self.tea_broadcaster = tf2_ros.TransformBroadcaster()
+        # self.cup_broadcaster = tf2_ros.TransformBroadcaster()
 
-        self.bridge = CvBridge()    
+        self.bridge = CvBridge() 
+
+        # Initialize camera intrinsics and images as empty   
         self.intrinsics = None
         self.color_image = []
         self.depth_image = []
 
+        # Mapping of ingredient names to id
         self.ingredient_ids = {
             'water': sre.WATER,
             'sugar': sre.SUGAR,
@@ -36,6 +73,7 @@ class Vision:
             'tea': sre.TEA
             }
 
+        # Mapping of color to ingredient name
         self.color_to_ing = {
             'blue': 'water',
             'green': 'sugar',
@@ -43,6 +81,7 @@ class Vision:
             'orange': 'tea'
         }
 
+        # Color thresholds to be used in mask for get_position
         self.thresholds = {
             'blue': (np.array([15, 225, 20]), np.array([35, 255, 255])),
             'green': (np.array([35, 80, 20]), np.array([55, 255, 255])),
@@ -52,8 +91,16 @@ class Vision:
 
         self.r = rospy.Rate(100)
 
-
     def get_depth(self, x, y, depth_image):
+        """Returns average depth of a small area around given pixel coordinate.
+
+        :param x: x-coordinate of pixel where depth calculation is centered
+        :param y: y-coordinage of pixel where depth calculation is centered
+        :param depth_image: depth image array
+
+        :return depth: average depth of 10x10 pixel square around given x, y
+
+        """
         dim = depth_image.shape
         if dim[1]-x < 5:
             if dim[0]-y < 5:
@@ -69,6 +116,17 @@ class Vision:
         return depth
 
     def get_position(self, color_image, depth_image, intrinsics):
+        """Returns dictionary with ingredient names as keys and their bottle
+        position [x, y, z] as the corresponding value (e.g., 'water': [1, 2, 3]).
+        Returns False if color or depth image is missing, or if color image
+        cannot be converted to HSV.
+
+            :param color_image: color image array
+            :param depth_image: aligned depth to color image array
+            :param intrinsics: camera intrinsics
+
+            :returns bottle_pos: dictionary mapping ingredient names to [x, y, z] pos
+        """
         try:
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
         except:
@@ -121,22 +179,19 @@ class Vision:
         return bottle_pos
 
     def broadcast(self, xyz, name):
+        """Creates and broadcasts transforms for ingredient bottles.
+
+            :param xyz: list of real-world corrdinates [x, y, z]
+            :param name: ingredient name of bottle to be broadcast
+
+            :returns 
+        """
         camera_bottle_tf = TransformStamped()
 
-        if name == 'water':
-            frame_name = 'ingredient01_tag'
-        elif name == 'sugar':
-            frame_name = 'ingredient02_tag'
-        elif name == 'lemon':
-            frame_name = 'ingredient03_tag'
-        elif name == 'coffee':
-            frame_name = 'ingredient04_tag'
-        elif name == 'cup':
-            frame_name = 'cup_tag'
+        frame_name = f'ingredient0{self.ingredient_ids[name]}_tag'
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
-        # camera_bottle_tf.header.frame_id = f'{name}_frame'
         camera_bottle_tf.header.frame_id = 'camera_color_optical_frame'
         camera_bottle_tf.child_frame_id = frame_name
         # adjust to center
@@ -158,18 +213,21 @@ class Vision:
         elif name == 'lemon':
             self.lemon_broadcaster.sendTransform(camera_bottle_tf)
         elif name == 'coffee':
-            self.coffee_broadcaster.sendTransform(camera_bottle_tf)
-        elif name == 'cup':
-            self.cup_broadcaster.sendTransform(camera_bottle_tf)
+            self.tea_broadcaster.sendTransform(camera_bottle_tf)
+        # elif name == 'cup':
+        #     self.cup_broadcaster.sendTransform(camera_bottle_tf)
 
     def color_callback(self, img):
+        """Callback for the color image subscriber (sub_color)."""
         try:
             color_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
+            self.color_image = color_image
         except CvBridgeError as e:
             rospy.logerr('CvBridge Error: {0}'.format(e))
-        self.color_image = color_image
+        
         
     def depth_callback(self, img):
+        """Callback for the depth image subscriber (sub_depth)."""
         try:
             depth_image = self.bridge.imgmsg_to_cv2(img, 'passthrough')
             self.depth_image = depth_image
@@ -178,6 +236,7 @@ class Vision:
         
 
     def intr_callback(self, intr):
+        """Callback for the camera intrinsics subscriber (sub_intr)."""
         intrinsics = rs.intrinsics()
         intrinsics.width = intr.width
         intrinsics.height = intr.height
@@ -190,6 +249,11 @@ class Vision:
         self.intrinsics = intrinsics
         
     def show_image(self, img, img_name):
+        """Displays image in a named window.
+        
+        :param img: image array to be displayed
+        :param img_name: name of image window
+        """
         cv2.namedWindow(img_name, cv2.WINDOW_NORMAL)
         cv2.imshow(img_name, img)
         cv2.waitKey(3)
