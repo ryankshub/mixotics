@@ -19,7 +19,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
 import tf2_ros
-from enum_defs import StoreRoomEnum as sre
+from menu_utilities.enum_defs import StoreRoomEnum as sre
 
 
 class Vision:
@@ -67,10 +67,10 @@ class Vision:
 
         # Mapping of ingredient names to id
         self.ingredient_ids = {
-            'water': sre.WATER,
-            'sugar': sre.SUGAR,
-            'lemon': sre.LEMON,
-            'tea': sre.TEA
+            'water': sre.WATER.value,
+            'sugar': sre.SUGAR.value,
+            'lemon': sre.LEMON.value,
+            'tea': sre.TEA.value
             }
 
         # Mapping of color to ingredient name
@@ -188,12 +188,16 @@ class Vision:
         """
         camera_bottle_tf = TransformStamped()
 
-        frame_name = f'ingredient0{self.ingredient_ids[name]}_tag'
+        ingredient_num = self.ingredient_ids[name]
+
+        frame_name = f'ingredient0{ingredient_num}_tag'
+        rospy.logerr(frame_name)
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
         camera_bottle_tf.header.frame_id = 'camera_color_optical_frame'
         camera_bottle_tf.child_frame_id = frame_name
+        
         # adjust to center
         camera_bottle_tf.transform.translation.x = xyz[0]
         camera_bottle_tf.transform.translation.y = xyz[1]

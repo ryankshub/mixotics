@@ -33,7 +33,8 @@ class StoreRoomEnum(Enum):
     """
     Enumeration representing the current ingredients we support
     """
-    WATER = 0
-    LEMON = 1
-    TEA = 2
+    WATER = 1
+    SUGAR = 2
+    LEMON = 3
+    TEA = 4
     
