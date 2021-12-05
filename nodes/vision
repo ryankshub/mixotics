@@ -83,10 +83,10 @@ class Vision:
 
         # Color thresholds to be used in mask for get_position
         self.thresholds = {
-            'blue': (np.array([15, 225, 20]), np.array([35, 255, 255])),
-            'green': (np.array([35, 80, 20]), np.array([55, 255, 255])),
+            'blue': (np.array([0, 225, 20]), np.array([20, 255, 255])),
+            'green': (np.array([50, 80, 20]), np.array([70, 255, 255])),
             'yellow': (np.array([75, 75, 20]), np.array([95, 255, 255])),
-            'orange': (np.array([110, 100, 20]), np.array([120, 255, 255])),
+            'orange': (np.array([115, 120, 20]), np.array([135, 255, 255])),
         }
 
         self.r = rospy.Rate(100)
