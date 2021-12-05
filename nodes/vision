@@ -19,6 +19,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import pyrealsense2 as rs
 import tf2_ros
+from final_project_mixotics.msg import CupDetection
 from menu_utilities.enum_defs import StoreRoomEnum as sre
 
 
@@ -49,7 +50,10 @@ class Vision:
         # Subscribers for image data and intrinsics
         self.sub_color = rospy.Subscriber('/camera/color/image_raw', Image, self.color_callback)
         self.sub_depth = rospy.Subscriber('/camera/aligned_depth_to_color/image_raw', Image, self.depth_callback)
-        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)\
+        self.sub_intr = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.intr_callback)
+
+        # Publisher for cup slot status data (filled vs not)
+        self.pub_cup = rospy.Publisher('cup_status', CupDetection, queue_size=10)
         
         # Broadcasters for bottle and cup tfs
         self.water_broadcaster = tf2_ros.TransformBroadcaster()
@@ -114,6 +118,9 @@ class Vision:
 
         depth = np.average(depth)
         return depth
+
+    def cup_detection(self):
+        return
 
     def get_position(self, color_image, depth_image, intrinsics):
         """Returns dictionary with ingredient names as keys and their bottle
