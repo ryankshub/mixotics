@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """ 
 Broadcasts transforms for ingredient bottles and determines if there is 
@@ -82,7 +82,7 @@ class Vision:
         }
 
         # Color thresholds to be used in mask for get_position
-        self.thresholds = {
+        self.thresholds_hsv = {
             'blue': (np.array([0, 225, 20]), np.array([20, 255, 255])),
             'green': (np.array([50, 80, 20]), np.array([70, 255, 255])),
             'yellow': (np.array([75, 75, 20]), np.array([95, 255, 255])),
@@ -140,7 +140,7 @@ class Vision:
             return False
 
         bottle_pos = {}
-        for k, v in self.thresholds.items():
+        for k, v in self.thresholds_hsv.items():
 
             mask = cv2.inRange(hsv_image, v[0], v[1])
 
@@ -191,7 +191,7 @@ class Vision:
         ingredient_num = self.ingredient_ids[name]
 
         frame_name = f'ingredient0{ingredient_num}_tag'
-        rospy.logerr(frame_name)
+        # rospy.logerr(frame_name)
 
         # generate transform
         camera_bottle_tf.header.stamp = rospy.Time.now()
@@ -216,7 +216,7 @@ class Vision:
             self.sugar_broadcaster.sendTransform(camera_bottle_tf)
         elif name == 'lemon':
             self.lemon_broadcaster.sendTransform(camera_bottle_tf)
-        elif name == 'coffee':
+        elif name == 'tea':
             self.tea_broadcaster.sendTransform(camera_bottle_tf)
         # elif name == 'cup':
         #     self.cup_broadcaster.sendTransform(camera_bottle_tf)
