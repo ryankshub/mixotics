@@ -52,21 +52,19 @@ class mover():
 
         self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        # self.grab() #Approach to ingredient done
+        # self.grab() 
 
-        self.grab = rospy.Service("grab", grab, self.grab)
+        self.grab = rospy.Service("grab", grab, self.grab) #Approach to ingredient done
 
+        # self.pour()
 
-
-        # self.pour()     #Takes ingrdient and pours it into cup
-
-        # # self.pour() = rospy.Service("pour", pour, self.pour)
-
+        self.pour = rospy.Service("pour", pour, self.pour) #Takes ingrdient and pours it into cup
 
         
-        # self.stock()  #Takes ingrdient back to stocking area and resets arm back into ready position
+        # self.stock()  
 
-        # # self.stock() = rospy.Service("stock", stock, self.stock)
+        self.stock = rospy.Service("stock", stock, self.stock) #Takes ingrdient back to stocking area and resets arm back into ready position
+
 
     def wait_for_state_update(
             self, box_is_known=False, box_is_attached=False, timeout=4
@@ -438,7 +436,7 @@ class mover():
 
         return Empty()
 
-    def pour(self):
+    def pour(self, data):
 
         '''The pour function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
@@ -458,7 +456,7 @@ class mover():
 
         return[]
 
-    def stock(self):
+    def stock(self, data):
 
         '''The stock function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
