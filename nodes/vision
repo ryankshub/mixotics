@@ -4,6 +4,9 @@
 Broadcasts transforms for ingredient bottles and determines if there is 
 room for another order (cup) in the prep area. 
 
+PUBLISHERS:
+  + pub_cup (CupDetection) ~ boolean array showing which cup slots are open
+
 SUBSCRIBERS:
   + sub_color (Image) ~ raw color image array
   + sub_depth (Image) ~ aligned depth to color image array
@@ -83,6 +86,22 @@ class Vision:
             'green': 'sugar',
             'yellow': 'lemon',
             'orange': 'tea'
+        }
+
+        # Mapping of color to cup id
+        self.color_to_cup = {
+            'blue': 0,
+            'green': 1,
+            'yellow': 2,
+            'orange': 3
+        }
+
+        # Mapping of ingredient name to broadcaster
+        self.ing_to_broadcaster = {
+            'water': self.water_broadcaster,
+            'sugar': self.sugar_broadcaster,
+            'lemon': self.lemon_broadcaster,
+            'tea': self.tea_broadcaster
         }
 
         # Color thresholds to be used in mask for get_position
@@ -217,16 +236,8 @@ class Vision:
         camera_bottle_tf.transform.rotation.w = 1
         # rospy.logerr(name)
 
-        if name == 'water':
-            self.water_broadcaster.sendTransform(camera_bottle_tf)
-        elif name == 'sugar':
-            self.sugar_broadcaster.sendTransform(camera_bottle_tf)
-        elif name == 'lemon':
-            self.lemon_broadcaster.sendTransform(camera_bottle_tf)
-        elif name == 'tea':
-            self.tea_broadcaster.sendTransform(camera_bottle_tf)
-        # elif name == 'cup':
-        #     self.cup_broadcaster.sendTransform(camera_bottle_tf)
+        broadcaster = self.ing_to_broadcaster[name]
+        broadcaster.sendTransform(camera_bottle_tf)
 
     def color_callback(self, img):
         """Callback for the color image subscriber (sub_color)."""
