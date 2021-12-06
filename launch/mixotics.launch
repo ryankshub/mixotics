@@ -1,8 +1,9 @@
 <launch>
-  <include file="$(find final_project_mixotics)/launch/tag_finder.launch">
+  <!-- <include file="$(find final_project_mixotics)/launch/tag_finder.launch">
     <arg name="demo" value="false"/>
     <arg name="use_color" value="false"/>
-  </include>
+  </include> -->
+  <include file="$(find final_project_mixotics)/launch/voice.launch"/>
   <node name="order_handler" pkg="final_project_mixotics" type="order_handler" output="screen"/>
-  <node name="mover" pkg="final_project_mixotics" type="mover" output="screen"/>
+  <!-- <node name="mover" pkg="final_project_mixotics" type="mover" output="screen"/> -->
 </launch>

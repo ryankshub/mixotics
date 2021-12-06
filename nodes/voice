@@ -70,7 +70,7 @@ class Voice:
             msg = 'Thank you for your order. We are processing it now.'
             self.state = State.IDLE
             self.order_msg.orders = self.order
-            self.process_order(self.order_msg)
+            self.process_order(self.order)
             return msg
             
         elif 'no' in self.voice_text:
