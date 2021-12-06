@@ -72,6 +72,9 @@ class Vision:
         self.color_image = []
         self.depth_image = []
 
+        # Initialize cup array for booleans indicating cup status
+        self.cup_array = []
+
         # Mapping of ingredient names to id
         self.ingredient_ids = {
             'water': sre.WATER.value,
@@ -138,6 +141,21 @@ class Vision:
         depth = np.average(depth)
         return depth
 
+    def calc_cup_avg(self, cup_array):
+        count = [0, 0, 0, 0]
+        for i, status in cup_array:
+            if i >=65:
+                inc = 0.6
+            elif i > 30 and i < 65:
+                inc = 0.3
+            else:
+                inc = 0.1
+            for idx, cup in enumerate(status):
+                if cup:
+                    count[idx] = count[idx] + inc
+        cup_status = [True for c in count if c > 0.5 else False]
+        return cup_status
+
     def cup_detection(self, color_image):
 
         try:
@@ -152,7 +170,7 @@ class Vision:
         clipped_img = hsv_image[:int(hsv_image.shape[0]/2)]
         # self.show_image(clipped_img, 'Clipped')
 
-        cup_array = [False, False, False, False]
+        cup_status = [False, False, False, False]
         for k, v in self.thresholds_hsv.items():
 
             mask = cv2.inRange(clipped_img, v[0], v[1])
@@ -174,12 +192,15 @@ class Vision:
                 filled = False
 
             
-            cup_array[self.color_to_cup[k]] = filled
+            cup_status[self.color_to_cup[k]] = filled
             cv2.drawContours(dilate, c_cup, -1, (0, 255, 0), 8)
             # self.show_image(dilate, f'Clipped - {k}')
+        self.cup_array.append(cup_status)
 
-        self.pub_cup.publish(cup_array)
-
+        if len(self.cup_array) > 100:
+            del self.cup_array[0]
+            cup_avg = self.calc_cup_avg(self.cup_array)
+            self.pub_cup.publish(cup_avg)
 
     def get_position(self, color_image, depth_image, intrinsics):
         """Returns dictionary with ingredient names as keys and their bottle
