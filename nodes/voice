@@ -61,17 +61,17 @@ class Voice:
         return [d for d in self.voice_text.split(' ') if d in self.wake] == self.wake
 
     def confirm_check(self):
-        if self.voice_text.contains('yes'):
+        if 'yes' in self.voice_text:
             msg = 'Thank you for your order. We are processing it now.'
             self.state = State.IDLE
             return msg
             
-        elif self.voice_text.contains('no'):
-            msg = "I'm sorry."
+        elif 'no' in self.voice_text:
+            msg = "I'm sorry... My mistake. I won't get it wrong again. Could you please place repeat your order?"
             self.state = State.REQUEST
             return msg
         else:
-            msg = f"I'm sorry. I didn't quite catch that. To confirm, you ordered the following: {", ".join(self.order)}. Is that correct?"
+            msg = f"I didn't quite catch that. Did you order the following?: {', '.join(self.order)}."
             self.state = State.CONFIRM
             return msg
 
@@ -91,16 +91,17 @@ class Voice:
                 self.state = State.REQUEST
         elif self.state == State.REQUEST:
             self.pub.publish("What would you like to drink?")
-            rospy.sleep(10)
+            rospy.sleep(8)
             self.state = State.LISTEN
         elif self.state == State.LISTEN:
             self.order = self.process_text()
             message = self.order_responses(self.order)
             self.pub.publish(message)
-            rospy.sleep(5)
+            rospy.sleep(8)
         elif self.state == State.CONFIRM:
             self.pub.publish(self.confirm_check())
             rospy.loginfo("call order_handler")
+            rospy.sleep(8)
         rospy.loginfo(self.state)
 
 
