@@ -5,6 +5,22 @@
 """
 import rospy
 from std_msgs.msg import String
+from enum import Enum, auto
+import math
+from std_srvs.srv import Empty, EmptyResponse
+import tf2_ros
+import geometry_msgs.msg
+from tf_conversions import transformations
+from homework2.compute import FigureEight, Kinematics
+
+class State(Enum):
+    """
+    Specifies the state of the control loop (either idle, request, listen or confirm)
+    """
+    IDLE = auto()
+    REQUEST = auto()
+    LISTEN = auto()
+    CONFIRM = auto()
 
 class Voice:
 
@@ -13,17 +29,39 @@ class Voice:
         self.voice_text = None
         self.menu = rospy.get_param('/drinks')
 
+        self.state = State.IDLE
+
+        # Main loop runs in a timer with frequency specified in launch file
+        self.tmr = rospy.Timer(rospy.Duration(10), self.main_loop)
+
     def subscriber_callback(self, data):
         self.voice_text = data
 
     def process_text(self):
         split_text = self.voice_text.split(' ')
         order = [s for s in split_text if s in self.menu]
-        
-
-
     
+    def main_loop(self):
+        """ 
+        The main control loop timer callback (checks state)
 
+        Args:
+          event - A rospy.Timer event
+        """
+        if self.state == State.IDLE:
+            if self.wake_check():
+                self.state = State.REQUEST
+        elif self.state == State.REQUEST:
+            self.pub.publish("What would you like to drink?")
+            rospy.sleep(5)
+            self.state = State.LISTEN
+        elif self.state == State.LISTEN:
+            order = self.process_text()
+            message = self.order_responses(order)
+            self.pub.publish(message)
+            rospy.sleep(5)
+        elif self.state == State.CONFIRM:
+            rospy.loginfo("call order_handler")
 
 
 def main():
