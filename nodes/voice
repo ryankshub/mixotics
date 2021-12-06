@@ -60,6 +60,23 @@ class Voice:
     def wake_check(self):
         return [d for d in self.voice_text.split(' ') if d in self.wake] == self.wake
 
+    def confirm_check(self):
+        if self.voice_text.contains('yes'):
+            msg = 'Thank you for your order. We are processing it now.'
+            self.state = State.IDLE
+            return msg
+            
+        elif self.voice_text.contains('no'):
+            msg = "I'm sorry."
+            self.state = State.REQUEST
+            return msg
+        else:
+            msg = f"I'm sorry. I didn't quite catch that. To confirm, you ordered the following: {", ".join(self.order)}. Is that correct?"
+            self.state = State.CONFIRM
+            return msg
+
+            
+
     
     def main_loop(self, event):
         """ 
@@ -68,6 +85,7 @@ class Voice:
         Args:
           event - A rospy.Timer event
         """
+        
         if self.state == State.IDLE:
             if self.wake_check():
                 self.state = State.REQUEST
@@ -76,11 +94,12 @@ class Voice:
             rospy.sleep(10)
             self.state = State.LISTEN
         elif self.state == State.LISTEN:
-            order = self.process_text()
-            message = self.order_responses(order)
+            self.order = self.process_text()
+            message = self.order_responses(self.order)
             self.pub.publish(message)
-            rospy.sleep(10)
+            rospy.sleep(5)
         elif self.state == State.CONFIRM:
+            self.pub.publish(self.confirm_check())
             rospy.loginfo("call order_handler")
         rospy.loginfo(self.state)
 
