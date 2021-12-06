@@ -10,7 +10,7 @@ from moveit_commander.conversions import pose_to_list
 from rospy.core import rospydebug
 from std_srvs.srv import EmptyResponse, SetBoolResponse, SetBool
 from std_msgs.msg import Empty
-from final_project_mixotics.srv import grab, SetInstr, PourInstr
+from final_project_mixotics.srv import grab, SetInstr, PourInstr, VerifyInstr
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
@@ -54,21 +54,13 @@ class mover():
 
         self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        # self.grab() 
-
         self.grab = rospy.Service("grab", SetInstr, self.grab) #Approach to ingredient done
-
-        # self.pour()
 
         self.pour = rospy.Service("pour", PourInstr, self.pour) #Takes ingrdient and pours it into cup
 
-        
-        # self.stock()  
-
         self.stock = rospy.Service("stock", SetInstr, self.stock) #Takes ingrdient back to stocking area and resets arm back into ready position
 
-        self.receive = rospy.ServiceProxy('VerifyInstr', self.receive) # verification service, return 1 or 0 to see if task executed successfully
-
+        self.receive = rospy.ServiceProxy('verify', VerifyInstr) # verification service, return 1 or 0 to see if task executed successfully
 
 
     def wait_for_state_update(
@@ -172,22 +164,21 @@ class mover():
         '''   
 #To do: int2string
         ingredientString = "ingredient0"+str(ingredient)
-        self.desiredIngredient = ingredientString
-        rospy.loginfo(ingredientString)
-        # self.desiredIngredient = "ingredient04"
-        self.desiredLocations = self.c_list    #Change ingredient name as required
 
-        pos = self.scene.get_object_poses([self.desiredIngredient])
+        self.desiredIngredient = ingredientString #The ingredient we want to use
 
-        self.pos_pour = self.scene.get_object_poses([self.desiredLocations])
+        self.desiredLocations = self.c_list    #All ingredients from ROS Param file
+
+        pos = self.scene.get_object_poses([self.desiredIngredient]) #Position of Ingredient we want
+
+        self.pos_pour = self.scene.get_object_poses([self.desiredLocations]) #Position of all possible locations
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
         self.x = pos[self.desiredIngredient].position.x
         self.x = self.x + 0.005
         self.y = pos[self.desiredIngredient].position.y
-        self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
+        self.y = self.y+0.110     #Offset so it does not hit gripper, only works with specific input from objects 
         self.z = pos[self.desiredIngredient].position.z
-            
 
 #Do not change, these are the joints neccesary to grip glass 
 
@@ -210,8 +201,6 @@ class mover():
             pass
 
         rospy.loginfo("Time to Move")
-
-
 
         return []
 
@@ -433,25 +422,28 @@ class mover():
         self.move_group.execute(plan, wait = True)
         return[] 
 
-    def receive(self):
-        return[]
-
     def grab(self, data):
 
         '''The grab function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
         '''   
-        ingredient = data.ingredient #Ingredient Number
+        try:
+            ingredient = data.ingredient #Ingredient Number
 
-        instruct = data.instr_id 
+            instruct = data.instr_id 
 
-        self.readyPos(ingredient)
+            self.readyPos(ingredient)
 
-        self.readyGrab()
+            self.readyGrab()
 
-        self.grasp()      #Initial grasp of ingredient
+            self.grasp()      #Initial grasp of ingredient
 
-        self.receive(instruct)
+            err_code = VerifyInstr.SUCCESS
+        except:
+
+            err_code = VerifyInstr.FAILURE
+
+        self.receive(instruct, err_code)
 
         return Empty()
 
@@ -460,27 +452,33 @@ class mover():
         '''The pour function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
         ''' 
+        try:
 
-        amount = data.amount_ml         # Get from menu
+            amount = data.amount_ml         # Get from menu
 
-        instruct = data.instr_id        #We receive we have as response
+            instruct = data.instr_id        #We receive we have as response
 
-        cup = data.cup_id               #Get from Ryan numbers, take desired location, match
+            cup = data.cup_id               #Get from Ryan numbers, take desired location, match
 
-        self.movetopour(cup)
+            self.movetopour(cup)
 
-        self.tilt()
+            self.tilt()
 
         #Adjusting the amount of ml the user receives
         
-        self.squeeze(amount)
+            self.squeeze(amount)
 
-        self.untilt()
+            self.untilt()
         
-        self.grasp()
+            self.grasp()
 
-        self.receive(instruct)
+            err_code = VerifyInstr.SUCCESS
 
+        except: 
+
+            err_code = VerifyInstr.FAILURE
+
+        self.receive(instruct, err_code)
 
         return Empty()
 
@@ -489,20 +487,27 @@ class mover():
         '''The stock function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
         ''' 
-        ingredient = data.ingredient
 
-        instruct = data.instr_id 
+        try:
+            ingredient = data.ingredient
 
-        self.movetodrop(ingredient) #ingredient goes in here
+            instruct = data.instr_id 
+
+            self.movetodrop(ingredient) #ingredient goes in here
         
-        self.gripperopen()
+            self.gripperopen()
 
-        self.retract()
+            self.retract()
 
-        self.receive(instruct)
+            err_code = VerifyInstr.SUCCESS
+
+        except: 
+
+            err_code = VerifyInstr.FAILURE
+
+        self.receive(instruct, err_code)
 
         return Empty()
-
 
 if __name__ == "__main__":
         rospy.init_node("mover") #Initialize the node
