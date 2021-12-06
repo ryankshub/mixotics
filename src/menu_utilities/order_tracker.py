@@ -85,7 +85,7 @@ class OrderTracker:
             recipe = drink[2]
             # Set instr_id
             instr_id = self._instr_counter
-            self._instr_counter = (self._instr_counter % self._MAX_INSTR) + 1
+            self._instr_counter = (self._instr_counter % self._MAX_INSTRS) + 1
             # Grab open cup slot
             cup_id = self._grab_slot()
             # Split recipe for instruction processing
@@ -238,7 +238,7 @@ class OrderTracker:
             for i, name in enumerate(order_names):
                 # Log drink into tracker
                 idx = len(self._status[order_num])
-                self._status[order_num].append(False, name, order_recipes[i])
+                self._status[order_num].append((False, name, order_recipes[i]))
                 parsed_orders.append((order_num, idx, order_recipes[i]))
         self._backlog += parsed_orders
         self._process_orders()
@@ -328,7 +328,7 @@ class OrderTracker:
         if order_num is not None:
             # Grab status and cup_ips for order
             bools = [x[0] for x in self._status.get(order_num, [(False, 'NUL', 0)])]
-            drink_names = [x[1] for x in self._status.get(order_num, [False, 'NUL', 0])]
+            drink_names = [x[1] for x in self._status.get(order_num, [(False, 'NUL', 0)])]
             cup_ids = [x[2] for x in self._status.get(order_num, [(False, 'NUL', 0)])]
             # If all cups in order are finished
             if all(bools):
@@ -342,7 +342,7 @@ class OrderTracker:
             # Check each and every order
             for order in self._status.keys():
                 bools = [x[0] for x in self._status.get(order, [(False, 'NUL', 0)])]
-                drink_names = [x[1] for x in self._status.get(order_num, [False, 'NUL', 0])]
+                drink_names = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 cup_ids = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 if all(bools):
                     self._status.pop(order_num)
