@@ -178,18 +178,18 @@ class OrderTracker:
             
             #Integrate Releases
             elif instr[-1][0] == InstrEnum.RELEASE:
-                for step in range(0, len(processed), -1):
-                    if step[-1][0] == InstrEnum.RELEASE:
+                for step in range(len(processed)-1, -1, -1):
+                    if processed[step][-1][0] == InstrEnum.RELEASE:
                         # Check if instruction is the same, if so, don't add
-                        if step[-1] == instr[-1]:
+                        if processed[step][-1] == instr[-1]:
                             break
                         else:
                             # raise hell
                             raise ValueError(f"{instr[-1][0]} follows release instead of grab")
-                    elif step[-1][0] == InstrEnum.GRAB:
+                    elif processed[step][-1][0] == InstrEnum.GRAB:
                         # Check if instruction pairs with release
                         # If so, add release
-                        if step[-1][1] == instr[-1][1]:
+                        if processed[step][-1][1] == instr[-1][1]:
                             processed.append(instr)
                             break
                         else:

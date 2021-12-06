@@ -165,7 +165,17 @@ class mover():
         '''   
 #To do: int2string
 
+        # if self.move_gripper.set_named_target('open') != True:
+
+        #     self.move_gripper.set_named_target('open')
+
+        # else:
+        #     pass
+
         self.move_gripper.set_named_target('open')
+
+        self.move_gripper.go(wait=True)
+
 
         rospy.loginfo("The readyPos function begins")
 
@@ -260,11 +270,11 @@ class mover():
 
         rospy.loginfo("Soft initial grasp")
         
-        client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
-        client.wait_for_server()
+        self.client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
+        self.client.wait_for_server()
         goal = GraspGoal(width = 0.065, epsilon = GraspEpsilon(0.045, 0.045), speed = 0.005, force = 2)
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(15.0))
+        self.miniGrasp = self.client.send_goal(goal)
+        self.client.wait_for_result(rospy.Duration.from_sec(15.0))
 
         rospy.loginfo("grasped")
 
@@ -283,7 +293,7 @@ class mover():
         rospy.loginfo(self.pos_pour[self.desiredLocation].position.x)
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
         self.x_pour = self.pos_pour[self.desiredLocation].position.x
-        self.x_pour = self.x_pour+0.005
+        self.x_pour = self.x_pour-0.004
         self.y_pour = self.pos_pour[self.desiredLocation].position.y
         self.y_pour = self.y_pour+0.113 #Offset so it does not hit gripper, only works with specific input from objects 
         self.z_pour = self.pos_pour[self.desiredLocation].position.z
@@ -352,12 +362,11 @@ class mover():
 
         #Using graspgoal action to squeeze
      
-        client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
-        client.wait_for_server()
+        self.megaGrasp = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)
+        self.megaGrasp.wait_for_server()
         goal = GraspGoal(width = 0.002, epsilon = GraspEpsilon(0.1, 0.1), speed = 100, force = 100)
-        client.send_goal(goal)
-        client.wait_for_result(rospy.Duration.from_sec(5.0))
-        client.cancel_all_goals()
+        self.megaGrasp.send_goal(goal)
+        self.megaGrasp.wait_for_result(rospy.Duration.from_sec(5.0))
 
         rospy.loginfo('squeeze action happened')
 
@@ -365,7 +374,7 @@ class mover():
 
         rospy.loginfo('nap done')
 
-        client.cancel_all_goals()
+        # client.cancel_all_goals()
 
 
         
@@ -374,16 +383,14 @@ class mover():
         '''The movetodrop function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
            from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
         '''
+
         dropLocation = ingredient
         rospy.loginfo("start move2drop")
         #Return to the initial pickup location
         
-        current = self.move_group.get_current_pose().pose #Current position for pos shift
-        current_pose = self.move_group.get_current_pose() #Current position for pos shift
-        xCurrent = current_pose.pose.position.x
-        yCurrent = current_pose.pose.position.y
-        zCurrent = current_pose.pose.position.z
-        rospy.loginfo("end move2drop")
+        self.move_group.shift_pose_target(2, +0.04)
+        success, traj_msg, planTime, err = self.move_group.plan()
+        self.move_group.execute(traj_msg, wait=True)
 
 
         #self.scene.remove_world_object(self.desiredLocation) #Removes bottle so the motion is not considred a collision
@@ -410,14 +417,14 @@ class mover():
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
-        self.tilt()
+        # self.tilt()
 
 
-        current = self.move_group.get_current_pose().pose #Current position for pos shift
-        current_pose = self.move_group.get_current_pose() #Current position for pos shift
-        xCurrent = current_pose.pose.position.x
-        yCurrent = current_pose.pose.position.y
-        zCurrent = current_pose.pose.position.z
+        # current = self.move_group.get_current_pose().pose #Current position for pos shift
+        # current_pose = self.move_group.get_current_pose() #Current position for pos shift
+        # xCurrent = current_pose.pose.position.x
+        # yCurrent = current_pose.pose.position.y
+        # zCurrent = current_pose.pose.position.z
         
         waypoints = []       
         current.position.x += self.x-xCurrent
@@ -425,9 +432,6 @@ class mover():
         (plan,fraction) = self.move_group.compute_cartesian_path(waypoints, 0.005, 0.0)
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
-
-
-
 
                 
         waypoints = []   
@@ -437,6 +441,9 @@ class mover():
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         self.move_group.execute(plan, wait = True)
 
+        # self.move_group.shift_pose_target(2, -0.002)
+        # success, traj_msg, planTime, err = self.move_group.plan()
+        # self.move_group.execute(traj_msg, wait=True)
 
 
     def tilt(self):   
@@ -471,16 +478,20 @@ class mover():
            once it has reached the storage area.
         ''' 
 
+        # self.miniGrasp.cancel_goal()
+        self.megaGrasp.cancel_goal()
+        self.megaGrasp = None
+        # self.client.cancel_all_goals()
         #Open the grippers to deposit the bottle
         rospy.loginfo("start gripOpen")
         client3 = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
         client3.wait_for_server()
-        goal = MoveGoal(width = 0.080, speed = 0.15)
+        goal = MoveGoal(width = 0.065, speed = 0.5) 
         client3.send_goal(goal)
+        # client3.wait_for_result(rospy.Duration.from_sec(25.0))
         client3.wait_for_result(rospy.Duration.from_sec(25.0))
 
-        # client3.wait_for_result(rospy.Duration.from_sec(5.0))
-        rospy.loginfo("end gripOpen")
+        # rospy.loginfo("end gripOpen")
 
 
     def retract(self):
@@ -500,6 +511,8 @@ class mover():
         plan = self.move_group.retime_trajectory(moveit_commander.RobotCommander().get_current_state(), plan, 0.25,0.25)
         rospy.loginfo('plan was done, quickly')
         self.move_group.execute(plan, wait = True)
+
+        
 
     def grab(self, data):
 
@@ -636,8 +649,8 @@ class mover():
 
             err_code = VerifyInstrRequest.SUCCESS
 
-        except: 
-
+        except Exception as e:
+            rospy.logerr(str(e)) 
             err_code = VerifyInstrRequest.FAILURE
 
         rospy.wait_for_service('verify')
