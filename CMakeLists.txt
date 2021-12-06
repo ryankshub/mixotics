@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_msgs
   rospy
   std_msgs
+  
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -46,11 +47,10 @@ catkin_python_setup()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  CupDetection.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -61,9 +61,7 @@ add_service_files(
   PourInstr.srv
   SetInstr.srv
   Refresh.srv
-  grab.srv
-  pour.srv
-  stock.srv
+  ConfirmOrder.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -178,6 +176,7 @@ catkin_install_python(PROGRAMS
   nodes/update_scene
   nodes/mover
   nodes/squeeze       #testing node
+  nodes/order_handler
   nodes/vision
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

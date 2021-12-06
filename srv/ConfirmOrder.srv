@@ -1,0 +1,7 @@
+# Request/Response for indicating to customer order is complete
+
+uint16 order_num # Order Number
+bool   success   # If true, order completed successfully
+string msg       # Msg providing details of success
+---
+# Empty Response
