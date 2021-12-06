@@ -93,6 +93,7 @@ class OrderHandler:
         self._RATE = 20 # in Hz
         self._time_delta = 1./self._RATE
         rospy.Timer(rospy.Duration(self._time_delta), self.main_loop)
+        self.YELLLING_FLAG = False
         rospy.spin()
 
 
@@ -115,6 +116,7 @@ class OrderHandler:
                 error_str += f"Drink {order} is not on menu\n"
                 continue
             order_item = self._menu_dict[order]
+            rospy.loginfo(f"WATER's RECIPE is {order_item.recipe}")
             # Check if ingredients are available
             for ingredient in order_item.ingredients:
                 if not self._storeroom[ingredient.value]:
@@ -153,7 +155,8 @@ class OrderHandler:
             raise rospy.ROSInterruptException
 
         else:
-            order_num = self._active_instr[0]    
+            order_num = self._active_instr[0]  
+            rospy.loginfo(f"RESULT {req.err_code}")  
             if req.err_code == VerifyInstrRequest.SUCCESS:
                 self._order_tracker.verify_result(req.instr_id, True)
                 self._active_complete = True
@@ -162,6 +165,8 @@ class OrderHandler:
                 cup_ids = self._order_tracker.get_cup_ids(order_num)
                 self._send_failed_orders(order_num, cup_ids)
                 self._order_tracker.verify_result(req.instr_id, False)
+                self._active_complete = True
+                self._active_instr = None
         return VerifyInstrResponse()
 
 
@@ -177,23 +182,24 @@ class OrderHandler:
         try:
             self._grab_client(req)
             rospy.loginfo(f"SENT GRAB {instr_id} FOR {instr[1].value}")
+            self.YELLLING_FLAG = True
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
 
 
-    def _send_pour(self, instr_id, instr):
+    def _send_pour(self, instr_id, instr, cup_id):
         """
         Request robot to pour ingredient into cup
         """
         rospy.loginfo(f"POURING TIME")
         req = PourInstrRequest(instr_id=instr_id,
-                               cup_id=instr[1].value,
-                               amount_ml=instr[2])
+                               cup_id=cup_id,
+                               amount_ml=instr[1])
         rospy.wait_for_service("pour")
         try:
             self._pour_client(req)
-            rospy.loginfo(f"SENT POUR {instr_id} FOR CUP: {instr[1].value} AMOUNT: {instr[2]}")
+            rospy.loginfo(f"SENT POUR {instr_id} FOR CUP: {cup_id} AMOUNT: {instr[1]}")
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
@@ -259,10 +265,12 @@ class OrderHandler:
         if len(self._new_orders) > 0:
             # if new_order, process order queue
             self._order_tracker.parse_new_orders(self._new_orders)
+            self._new_orders = []
         
         # If we are not processing an instruction, make a new one
         if self._active_instr is None or self._active_complete:
-            
+            if self.YELLLING_FLAG:
+                rospy.loginfo("TIME FOR NEW INSTRUCTION")
             # First, Check if any orders are complete
             completed_order_num, drink_names, cup_ids = self._order_tracker.is_order_complete()
             if completed_order_num != 0:
@@ -270,10 +278,19 @@ class OrderHandler:
                 self._send_confirm_orders(completed_order_num, drink_names, cup_ids)
 
             # Next, grab next instruction
-            next_instr = self._order_tracker.get_instruction()
+            (next_instr, cond1, cond2) = self._order_tracker.get_instruction()
+            if self.YELLLING_FLAG:
+                rospy.loginfo("WHAT THE HELL WILL I DO NEXT?")
+                rospy.loginfo(self._order_tracker._instr_queue)
+                rospy.loginfo(f"ACTIVE INSTRUCTION IS NOT NONE {cond1}")
+                rospy.loginfo(f'ACTIVE INSTRUCTION IS {self._order_tracker._active_instr}')
+                rospy.loginfo(f'INSTR_QUEUE IS 0: {cond2}')
+                rospy.loginfo(next_instr)
             # If present, send it
             if next_instr is not None:
                 rospy.loginfo(f"NEW ACTION")
+                print(self._order_tracker._instr_queue)
+                cup_id = next_instr[2]
                 instr_id = next_instr[3]
                 instr_cmd = next_instr[4]
                 self._active_instr = next_instr
@@ -282,10 +299,10 @@ class OrderHandler:
                 if instr_cmd[0] == InstrEnum.GRAB:
                     self._send_grab(instr_id, instr_cmd)
                 elif instr_cmd[0] == InstrEnum.POUR:
-                    self._send_pour(instr_id, instr_cmd)
+                    self._send_pour(instr_id, instr_cmd, cup_id)
                 elif instr_cmd[0] == InstrEnum.RELEASE:
                     self._send_release(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.DELIVERY:
+                elif instr_cmd[0] == InstrEnum.DELIVER:
                     # Auto-confirm a delivery instruction
                     self._order_tracker.verify_result(instr_id, True)
                 else:
