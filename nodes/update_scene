@@ -134,7 +134,7 @@ class SceneUpdater:
 
                     if self.color:
                         obj.pose.position.z = trans.transform.translation.z # bottle center is marked by tape
-                        quat = transformations.quaternion_from_euler(pi/2, 0, 0) # correct bottle pitch based on .stl file
+                        quat = transformations.quaternion_from_euler(0, 0, -pi/2) # correct bottle pitch based on .stl file
                     else:
                         quat = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
                     
