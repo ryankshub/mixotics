@@ -66,9 +66,9 @@ class OrderHandler:
         self._invUp_service = rospy.Service('update_inventory', InventoryUpdate, self._handle_invUp_service)
         self._verify_service = rospy.Service('verify_instr', VerifyInstr, self._handle_verify_service)
         # Set up clients
-        self._grab_client = rospy.ServiceProxy('grab_instr', SetInstr)
-        self._pour_client = rospy.ServiceProxy('pour_instr', PourInstr)
-        self._release_client = rospy.ServiceProxy('release_instr', SetInstr)
+        self._grab_client = rospy.ServiceProxy('grab', SetInstr)
+        self._pour_client = rospy.ServiceProxy('pour', PourInstr)
+        self._release_client = rospy.ServiceProxy('release', SetInstr)
         self._confirm_order_client = rospy.ServiceProxy('confirm_order', ConfirmOrder)
         # Parse Menu file
         self._menu_dict = parse_menu_xml(self.menu_path)
