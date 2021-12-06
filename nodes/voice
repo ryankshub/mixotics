@@ -69,14 +69,12 @@ class Voice:
         if 'yes' in self.voice_text:
             msg = 'Thank you for your order. We are processing it now.'
             self.state = State.IDLE
-            if 'iced tea' in self.order:
-                self.order = ['icedtea' for o in self.order if o == 'iced tea']
             self.order_msg.orders = self.order
             self.process_order(self.order_msg)
             return msg
             
         elif 'no' in self.voice_text:
-            msg = "I'm sorry... My mistake. I won't get it wrong again. Could you please place repeat your order?"
+            msg = "I'm sorry... My mistake. I won't get it wrong again. Could you please repeat your order?"
             self.state = State.REQUEST
             return msg
         else:
