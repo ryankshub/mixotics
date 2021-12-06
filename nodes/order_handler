@@ -230,9 +230,9 @@ class OrderHandler:
         req = ConfirmOrderRequest(order_num=order_num,
                                   success=True,
                                   msg=msg)
-        #rospy.wait_for_service("confirm_order")
+        rospy.wait_for_service("confirm_order")
         try:
-            #_ = self._confirm_order(req)
+            _ = self._confirm_order(req)
             rospy.loginfo("ORDER {order_num} DONE with msg: {msg}")
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
@@ -264,53 +264,55 @@ class OrderHandler:
         # Check if new_order is in
         if len(self._new_orders) > 0:
             # if new_order, process order queue
-            self._order_tracker.parse_new_orders(self._new_orders)
+            for order in self._new_orders:
+                self._send_confirm_orders(order[0], order[1], [x+1 for x in range(len(order[1]))])
+            # self._order_tracker.parse_new_orders(self._new_orders)
             self._new_orders = []
         
         # If we are not processing an instruction, make a new one
-        if self._active_instr is None or self._active_complete:
-            if self.YELLLING_FLAG:
-                rospy.loginfo("TIME FOR NEW INSTRUCTION")
-            # First, Check if any orders are complete
-            completed_order_num, drink_names, cup_ids = self._order_tracker.is_order_complete()
-            if completed_order_num != 0:
-                rospy.loginfo(f"ORDER COMPLETE")
-                self._send_confirm_orders(completed_order_num, drink_names, cup_ids)
+        # if self._active_instr is None or self._active_complete:
+        #     if self.YELLLING_FLAG:
+        #         rospy.loginfo("TIME FOR NEW INSTRUCTION")
+        #     # First, Check if any orders are complete
+        #     completed_order_num, drink_names, cup_ids = self._order_tracker.is_order_complete()
+        #     if completed_order_num != 0:
+        #         rospy.loginfo(f"ORDER COMPLETE")
+        #         self._send_confirm_orders(completed_order_num, drink_names, cup_ids)
 
-            # Next, grab next instruction
-            (next_instr, cond1, cond2) = self._order_tracker.get_instruction()
-            if self.YELLLING_FLAG:
-                rospy.loginfo("WHAT THE HELL WILL I DO NEXT?")
-                rospy.loginfo(self._order_tracker._instr_queue)
-                rospy.loginfo(f"ACTIVE INSTRUCTION IS NOT NONE {cond1}")
-                rospy.loginfo(f'ACTIVE INSTRUCTION IS {self._order_tracker._active_instr}')
-                rospy.loginfo(f'INSTR_QUEUE IS 0: {cond2}')
-                rospy.loginfo(next_instr)
-            # If present, send it
-            if next_instr is not None:
-                rospy.loginfo(f"NEW ACTION")
-                print(self._order_tracker._instr_queue)
-                cup_id = next_instr[2]
-                instr_id = next_instr[3]
-                instr_cmd = next_instr[4]
-                self._active_instr = next_instr
-                self._active_complete = False
+        #     # Next, grab next instruction
+        #     (next_instr, cond1, cond2) = self._order_tracker.get_instruction()
+        #     if self.YELLLING_FLAG:
+        #         rospy.loginfo("WHAT THE HELL WILL I DO NEXT?")
+        #         rospy.loginfo(self._order_tracker._instr_queue)
+        #         rospy.loginfo(f"ACTIVE INSTRUCTION IS NOT NONE {cond1}")
+        #         rospy.loginfo(f'ACTIVE INSTRUCTION IS {self._order_tracker._active_instr}')
+        #         rospy.loginfo(f'INSTR_QUEUE IS 0: {cond2}')
+        #         rospy.loginfo(next_instr)
+        #     # If present, send it
+        #     if next_instr is not None:
+        #         rospy.loginfo(f"NEW ACTION")
+        #         print(self._order_tracker._instr_queue)
+        #         cup_id = next_instr[2]
+        #         instr_id = next_instr[3]
+        #         instr_cmd = next_instr[4]
+        #         self._active_instr = next_instr
+        #         self._active_complete = False
 
-                if instr_cmd[0] == InstrEnum.GRAB:
-                    self._send_grab(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.POUR:
-                    self._send_pour(instr_id, instr_cmd, cup_id)
-                elif instr_cmd[0] == InstrEnum.RELEASE:
-                    self._send_release(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.DELIVER:
-                    # Auto-confirm a delivery instruction
-                    self._order_tracker.verify_result(instr_id, True)
-                    self._active_complete = True
-                    self._active_instr = None
-                    rospy.loginfo(f"STATUS: {self._order_tracker._status}")
-                else:
-                    # Actions we currently don't support go here
-                    pass
+        #         if instr_cmd[0] == InstrEnum.GRAB:
+        #             self._send_grab(instr_id, instr_cmd)
+        #         elif instr_cmd[0] == InstrEnum.POUR:
+        #             self._send_pour(instr_id, instr_cmd, cup_id)
+        #         elif instr_cmd[0] == InstrEnum.RELEASE:
+        #             self._send_release(instr_id, instr_cmd)
+        #         elif instr_cmd[0] == InstrEnum.DELIVER:
+        #             # Auto-confirm a delivery instruction
+        #             self._order_tracker.verify_result(instr_id, True)
+        #             self._active_complete = True
+        #             self._active_instr = None
+        #             rospy.loginfo(f"STATUS: {self._order_tracker._status}")
+        #         else:
+        #             # Actions we currently don't support go here
+        #             pass
 
 
 #Activate 'order_handler' node
