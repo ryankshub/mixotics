@@ -1,0 +1,83 @@
+import pygame
+import sys
+
+
+def main():
+    pygame.init()
+    clock = pygame.time.Clock()
+    fps = 60
+    size = [1500, 1000]
+    bg = [255, 255, 255]
+    screen = pygame.display.set_mode(size)
+    
+    title_font = pygame.font.SysFont('Avenir', 108)
+    subtitle_font = pygame.font.SysFont('Avenir', 88)
+    # Title
+    title_color = (65, 245, 227)
+    title = title_font.render("Sir Mix-A-Bot's SpeakEasy", True, title_color)
+    title_box = title.get_rect()
+    title_banner = pygame.Rect(0,0,1500, 150)
+    title_banner_color = (78, 42, 132)
+    # Menu
+    menu_color = (58, 238, 70)
+    menu = subtitle_font.render("Menu", True, menu_color)
+    menu_box = menu.get_rect()
+    menu_banner = pygame.Rect(0, 150, 400, 100)
+    menu_banner_color = (78, 42, 132)
+    # Order Status
+    order_stat_color = (238, 166, 58)
+    order_stat = subtitle_font.render("Order Status", True, order_stat_color)
+    order_stat_box = menu.get_rect()
+    order_stat_banner = pygame.Rect(400, 150, 650, 100)
+    order_stat_banner_color = (78, 42, 132)
+    # Upcoming Order
+    up_order_color = (235, 101, 60)
+    up_order = subtitle_font.render("Orders Upcoming", True, up_order_color)
+    up_order_box = menu.get_rect()
+    up_order_banner = pygame.Rect(0, 150, 400, 100)
+    up_order_banner_color = (78, 42, 132)
+
+    button = pygame.Rect(0, 950, 100, 50)  # creates a rect object
+    # The rect method is similar to a list but with a few added perks
+    # for example if you want the position of the button you can simpy type
+    # button.x or button.y or if you want size you can type button.width or
+    # height. you can also get the top, left, right and bottom of an object
+    # with button.right, left, top, and bottom
+
+    while True:
+        # Event Handler
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos  # gets mouse position
+
+                # checks if mouse position is over the button
+
+                if button.collidepoint(mouse_pos):
+                    # prints current location of mouse
+                    print('button was pressed at {0}'.format(mouse_pos))
+
+        screen.fill(bg)
+
+        # mouse_pos = pygame.mouse.get_pos()
+        # if button.collidepoint(mouse_pos):
+        #     pygame.draw.rect(screen, [0, 255, 0], button)
+        # else:
+        #     pygame.draw.rect(screen, [255, 0, 0], button)  # draw button
+
+        # Add title
+        pygame.draw.rect(screen, title_banner_color, title_banner)
+        title_pos_x = title_banner.x + title_banner.width/2 - title_box.width/2
+        title_pos_y = title_banner.y + title_banner.height/2 - title_box.height/2
+        screen.blit(title, (title_pos_x, title_pos_y))
+        pygame.display.update()
+        clock.tick(fps)
+
+    pygame.quit()
+    sys.exit
+
+
+if __name__ == '__main__':
+    main()
