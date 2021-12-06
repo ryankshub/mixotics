@@ -228,16 +228,19 @@ class OrderHandler:
         try:
             _ = self._confirm_order(req)
 
+            time = rospy.Time().now().to_sec()
+
             id_check = True
-            for c in cup_ids:
-                if self.cup_states[c-1] == 'RECEIVED':
-                    continue
-                else:
-                    id_check = False
-                    break
-            if id_check:
-                return
-                
+            while id_check: 
+                if ((rospy.Time().now().to_sec() - time) > 180):
+                    rospy.logerr('Please come pick up your drinks. You are holding up the ordering system.')
+                for c in cup_ids:
+                    if self.cup_states[c-1] == 'RECEIVED':
+                        self.cup_states[c-1] = 'CONFIRMED'
+                    else:
+                        break
+                id_check = False
+
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
             rospy.logerr(e)
