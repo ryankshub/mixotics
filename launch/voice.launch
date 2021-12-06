@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find ros_vosk)/launch/ros_vosk.launch"/>
+    <node pkg="final_project_mixotics" type="voice" name="voice"/>
+</launch>
