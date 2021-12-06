@@ -8,8 +8,9 @@ from moveit_msgs.msg import MoveItErrorCodes
 import geometry_msgs.msg
 from moveit_commander.conversions import pose_to_list
 from rospy.core import rospydebug
-from std_srvs.srv import EmptyResponse, Empty, SetBoolResponse, SetBool
-# from final_project_mixotics.srv import approach, refresh, pour
+from std_srvs.srv import EmptyResponse, SetBoolResponse, SetBool
+from std_msgs.msg import Empty
+from final_project_mixotics.srv import grab, stock, pour
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
@@ -51,17 +52,19 @@ class mover():
 
         self.add_hitBox() #Add hitbox so that robot does not accidentally collide with real environment
 
-        self.grab() #Approach to ingredient done
+        # self.grab() 
 
-        # self.grab = rospy.Service("grab", grab, self.grab)
+        self.grab = rospy.Service("grab", grab, self.grab) #Approach to ingredient done
 
-        self.pour()     #Takes ingrdient and pours it into cup
+        # self.pour()
 
-        # self.pour() = rospy.Service("pour", pour, self.pour)
+        self.pour = rospy.Service("pour", pour, self.pour) #Takes ingrdient and pours it into cup
+
         
-        self.stock()  #Takes ingrdient back to stocking area and resets arm back into ready position
+        # self.stock()  
 
-        # self.stock() = rospy.Service("stock", stock, self.stock)
+        self.stock = rospy.Service("stock", stock, self.stock) #Takes ingrdient back to stocking area and resets arm back into ready position
+
 
     def wait_for_state_update(
             self, box_is_known=False, box_is_attached=False, timeout=4
@@ -156,7 +159,7 @@ class mover():
                 return self.wait_for_state_update(box_is_known=True, timeout=timeout)
 
 
-    def readyPos(self):
+    def readyPos(self, info):
 
         '''The readyPos function is neccesary for the mover class to allow for the panda arm to get in its ready position.
            The pre-set ready position makes it easier for a robot to make a plan to go to the location of the ingredients,
@@ -164,8 +167,9 @@ class mover():
         '''   
 
         while self.close != True:
-
-            self.desiredIngredient = "ingredient04"
+            self.desiredIngredient = info
+            rospy.loginfo(f'info: {info}')
+            # self.desiredIngredient = "ingredient04"
             self.desiredLocation = "ingredient03"    #Change ingredient name as required
 
             pos = self.scene.get_object_poses([self.desiredIngredient])
@@ -420,20 +424,23 @@ class mover():
         self.move_group.execute(plan, wait = True)
         return[] 
 
-    def grab(self):
+    def grab(self, data):
 
         '''The grab function combines the readyPos and readyGrab functions into a single service that can be called by the user to
-           execute the the functions with respect to a desired ingredient. 
+           execute the functions with respect to a desired ingredient. 
         '''   
-
-        self.readyPos()
+        info = data.ingredient
+        self.readyPos(info)
         self.readyGrab()
-        self.grasp() #Initial grasp of ingredient
+        self.grasp()      #Initial grasp of ingredient
 
+        return Empty()
 
-        return []
+    def pour(self, data):
 
-    def pour(self):
+        '''The pour function combines the readyPos and readyGrab functions into a single service that can be called by the user to
+           execute the functions with respect to a desired ingredient. 
+        ''' 
 
         self.movetopour()
 
@@ -449,15 +456,15 @@ class mover():
 
         return[]
 
-    def stock(self):
+    def stock(self, data):
+
+        '''The stock function combines the readyPos and readyGrab functions into a single service that can be called by the user to
+           execute the functions with respect to a desired ingredient. 
+        ''' 
 
         self.movetodrop()
-
-        # rospy.sleep(10)
         
         self.gripperopen()
-
-        # rospy.sleep(3)
 
         self.retract()
 
@@ -468,4 +475,4 @@ if __name__ == "__main__":
         rospy.init_node("mover") #Initialize the node
         rospy.wait_for_message('move_group/status', GoalStatusArray)
         Mover = mover() #Call the node
-        #rospy.spin() #Keep running forever
+        rospy.spin() #Keep running forever
