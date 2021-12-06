@@ -7,9 +7,9 @@
             <ingredient>water</ingredient>
         </ingredients>
         <recipe>
-            <instr>Prep</instr>
             <instr item="water">Grab</instr>
-            <instr>Pour</instr>
+            <instr amount="20">Pour</instr>
+            <instr item="water">Release</instr>
             <instr>Deliver</instr>
         </recipe>
     </drink>
@@ -20,12 +20,12 @@
             <ingredient>lemon</ingredient>
         </ingredients>
         <recipe>
-            <instr>Prep</instr>
             <instr item="water">Grab</instr>
-            <instr>Pour</instr>
+            <instr amount="10">Pour</instr>
+            <instr item="water">Release</instr>
             <instr item="lemon">Grab</instr>
-            <instr>Pour</instr>
-            <instr>Mix</instr>
+            <instr amount="10">Pour</instr>
+            <instr item="lemon">Release</instr>
             <instr>Deliver</instr>
         </recipe>
     </drink>
@@ -36,12 +36,12 @@
             <ingredient>tea</ingredient>
         </ingredients>
         <recipe>
-            <instr>Prep</instr>
             <instr item="water">Grab</instr>
-            <instr>Pour</instr>
+            <instr amount="10">Pour</instr>
+            <instr item="water">Release</instr>
             <instr item="tea">Grab</instr>
-            <instr>Pour</instr>
-            <instr>Mix</instr>
+            <instr amount="10">Pour</instr>
+            <instr item="tea">Release</instr>
             <instr>Deliver</instr>
         </recipe>
     </drink>

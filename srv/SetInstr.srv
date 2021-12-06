@@ -2,4 +2,5 @@
 # Tells robot which ingredient to grab/release
 # Enum values can be found in python_pkg menu_utilities.enum_defs
 
-uint8 ingredient_enum
+uint16 instr_id        # Id of the instruction
+uint8 ingredient       # StoreRoomEnum value of the ingredient to grab

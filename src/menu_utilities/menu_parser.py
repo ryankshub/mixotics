@@ -46,9 +46,12 @@ def parse_menu_xml(menu_file):
         recipe_instrs = []
         for instr_node in recipe_node:
             instr_enum = InstrEnum[instr_node.text.upper()]
-            if instr_enum == InstrEnum.GRAB:
+            if instr_enum == InstrEnum.GRAB or instr_enum == InstrEnum.RELEASE:
                 instr_item = instr_node.attrib['item']
                 recipe_instrs.append((instr_enum, StoreRoomEnum[instr_item.upper()]))
+            elif instr_enum == InstrEnum.POUR:
+                instr_item = int(instr_node.attrib['amount'])
+                recipe_instrs.append((instr_enum, instr_item))
             else:
                 recipe_instrs.append((instr_enum, None))
                 

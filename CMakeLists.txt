@@ -61,9 +61,7 @@ add_service_files(
   PourInstr.srv
   SetInstr.srv
   Refresh.srv
-  grab.srv
-  pour.srv
-  stock.srv
+  ConfirmOrder.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -178,6 +176,7 @@ catkin_install_python(PROGRAMS
   nodes/update_scene
   nodes/mover
   nodes/squeeze       #testing node
+  nodes/order_handler
   nodes/vision
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
