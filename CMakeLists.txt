@@ -178,6 +178,7 @@ catkin_install_python(PROGRAMS
   nodes/squeeze       #testing node
   nodes/order_handler
   nodes/vision
+  nodes/voice
   test/cup_detection_test.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

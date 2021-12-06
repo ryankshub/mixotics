@@ -5,4 +5,28 @@
 
 
 """
+import rospy
+from std_msgs.msg import String
 
+class Voice:
+
+    def __init__(self):
+        self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
+        self.voice_text = 
+
+    def subscriber_callback(self, data):
+        self.voice_text = data
+
+
+
+def main():
+    """ The main() function. """
+    rospy.init_node('voice')
+    v = Voice()
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass
