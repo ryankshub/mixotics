@@ -9,6 +9,7 @@ from final_project_mixotics.srv import VerifyInstr, VerifyInstrResponse
 from final_project_mixotics.srv import PourInstr, PourInstrRequest
 from final_project_mixotics.srv import SetInstr, SetInstrRequest
 from final_project_mixotics.srv import ConfirmOrder, ConfirmOrderRequest
+from final_project_mixotics.msg import CupDetection
 from menu_utilities.enum_defs import InstrEnum
 from menu_utilities.menu_parser import parse_menu_xml
 from menu_utilities.order_tracker import OrderTracker
@@ -70,6 +71,8 @@ class OrderHandler:
         self._pour_client = rospy.ServiceProxy('pour', PourInstr)
         self._release_client = rospy.ServiceProxy('stock', SetInstr)
         self._confirm_order_client = rospy.ServiceProxy('confirm_order', ConfirmOrder)
+        # Set up subscribers
+        self._cup_detection_sub = rospy.Subscriber('cup_status', CupDetection)
         # Parse Menu file
         self._menu_dict = parse_menu_xml(self.menu_path)
         # Build StoreRoom 
