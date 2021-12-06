@@ -10,6 +10,8 @@ from final_porject_mixotics.srv import Order, OrderRequest
 
 # 3rd-party imports
 import rospy
+import pygame
+
 
 class MixGui:
     """
@@ -27,8 +29,13 @@ class MixGui:
         Constructor of ROS Node MixGui class. Creates the service, client and
         gui
         """
-        # init node
+        # init node and pygame
         rospy.init_node("mix_gui")
+        pygame.init()
+        # Constants
+        self._SCREEN_WIDTH = 1500
+        self._SCREEN_HEIGHT = 1000
+        self._BACKGROUND_RGB = [255, 255, 255]
         # Set up service
         self._confirm_service = rospy.Service('confirm_order', ConfirmOrder, self._handle_confirm_service)
         # Set up clients

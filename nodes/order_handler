@@ -64,7 +64,7 @@ class OrderHandler:
         # Set up services
         self._order_service = rospy.Service('process_order', Order, self._handle_order_service)
         self._invUp_service = rospy.Service('update_inventory', InventoryUpdate, self._handle_invUp_service)
-        self._verify_service = rospy.Service('verify_instr', VerifyInstr, self._handle_verify_service)
+        self._verify_service = rospy.Service('verify', VerifyInstr, self._handle_verify_service)
         # Set up clients
         self._grab_client = rospy.ServiceProxy('grab', SetInstr)
         self._pour_client = rospy.ServiceProxy('pour', PourInstr)
