@@ -227,6 +227,17 @@ class OrderHandler:
         rospy.wait_for_service("confirm_order")
         try:
             _ = self._confirm_order(req)
+
+            id_check = True
+            for c in cup_ids:
+                if self.cup_states[c-1] == 'RECEIVED':
+                    continue
+                else:
+                    id_check = False
+                    break
+            if id_check:
+                return
+                
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
             rospy.logerr(e)
