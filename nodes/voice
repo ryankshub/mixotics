@@ -14,6 +14,9 @@ class Voice:
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
         self.voice_text = None
         self.menu = rospy.get_param('/drinks')
+        self.state = 'IDLE'
+
+        self.wake = ['sir', 'mix', 'bot']
 
     def subscriber_callback(self, data):
         self.voice_text = data
@@ -21,7 +24,17 @@ class Voice:
     def process_text(self):
         split_text = self.voice_text.split(' ')
         order = [s for s in split_text if s in self.menu]
-        
+        return order
+
+    # def main_loop(self):
+    #     if [d for d in self.voice_text if d in self.wake] == self.wake:
+    #         self.state = 'REQUEST'
+
+    #     if self.state == 'REQUEST':
+
+
+
+
 
 
     
