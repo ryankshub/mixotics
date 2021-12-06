@@ -44,7 +44,8 @@ class Vision:
     :param ingredient_ids: Dictionary mapping ingredient names to ID as defined in enum_defs.StoreRoomEnum
     :param color_to_ing: Dictionary mapping colors to ingredient names
     "param ing_to_broadcaster: Dictionary mapping ingredient name to broadcaster
-    :param thresholds: Dictionary mapping colors to HSV threshold range for masking
+    :param thresholds_hsv: Dictionary mapping colors to HSV threshold range for masking
+    :param r: publishing frequency
     """
     
 
@@ -146,6 +147,10 @@ class Vision:
         return depth
 
     def calc_cup_avg(self, cup_array):
+        """Calculates rolling average of True/False values for cup status array.
+
+        :param cup_array: Boolean array giving status of cup slots (occupied/open)
+        """
         count = [0, 0, 0, 0]
         for i, status in enumerate(cup_array):
             if i >=6:
@@ -164,6 +169,11 @@ class Vision:
         return cup_status
 
     def cup_detection(self, color_image):
+        """Uses vision to detect colored cups and returns array giving
+        status of cup slots (occupied or open).
+
+        :param color_image: color image array
+        """
 
         try:
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
