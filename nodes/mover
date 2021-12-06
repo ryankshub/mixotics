@@ -283,11 +283,11 @@ class mover():
         rospy.loginfo(self.pos_pour[self.desiredLocation].position.x)
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
         self.x_pour = self.pos_pour[self.desiredLocation].position.x
-        self.x_pour = self.x_pour-0.025
+        self.x_pour = self.x_pour+0.005
         self.y_pour = self.pos_pour[self.desiredLocation].position.y
-        self.y_pour = self.y_pour+0.120 #Offset so it does not hit gripper, only works with specific input from objects 
+        self.y_pour = self.y_pour+0.113 #Offset so it does not hit gripper, only works with specific input from objects 
         self.z_pour = self.pos_pour[self.desiredLocation].position.z
-        self.z_pour = self.z_pour+0.2 #Offset on z so we can pour from above
+        self.z_pour = self.z_pour+0.22 #Offset on z so we can pour from above
         
         
         current = self.move_group.get_current_pose().pose #Current position for pos shift
@@ -516,6 +516,7 @@ class mover():
         num_check = 0
         while obj_check is False:
             resp = self.refresh()
+            rospy.loginfo(resp.obj_found)
             obj_check = resp.all_found
             if num_check > 5:
                 try:
@@ -525,7 +526,7 @@ class mover():
                 except rospy.ServiceException as e:
                     print(f"Can't talk to logic")
                     rospy.logerr(e)
-                return SetIntrResponse()
+                return SetInstrResponse()
             else:
                 num_check+=1
                 rospy.sleep(2)
@@ -599,7 +600,7 @@ class mover():
         
             rospy.loginfo('lets grasp')
 
-            self.grasp()
+            # self.grasp()
 
             rospy.loginfo('weird grasp')
 
