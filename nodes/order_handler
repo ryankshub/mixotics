@@ -4,7 +4,7 @@
 
 # Project imports
 from final_project_mixotics.srv import Order, OrderResponse
-from final_project_mixotics.srv import InventoryUpdate, InventoryUpdateRepsonse
+from final_project_mixotics.srv import InventoryUpdate, InventoryUpdateResponse
 from final_project_mixotics.srv import VerifyInstr, VerifyInstrResponse
 from final_project_mixotics.srv import PourInstr, PourInstrRequest
 from final_project_mixotics.srv import SetInstr, SetInstrRequest
@@ -18,6 +18,7 @@ from menu_utilities.order_tracker import OrderTracker
 
 # 3rd-party imports
 import rospy
+import rospkg
 
 class OrderHandler:
     """
@@ -57,22 +58,24 @@ class OrderHandler:
         # init node
         rospy.init_node("order_handler")
         # Grab Parameters
-        self.menu_path = rospy.get_param("/mixotics/menu_path", "/config/menu.xml")
+        rospack = rospkg.RosPack()
+        filepath = rospack.get_path('final_project_mixotics') + "/config/menu.xml"
+        self.menu_path = rospy.get_param("/mixotics/menu_path", filepath)
         # Set up services
         self._order_service = rospy.Service('process_order', Order, self._handle_order_service)
         self._invUp_service = rospy.Service('update_inventory', InventoryUpdate, self._handle_invUp_service)
         self._verify_service = rospy.Service('verify_instr', VerifyInstr, self._handle_verify_service)
         # Set up clients
-        self._grab_client = rospy.ServiceProxy('grab_instr', SetInstr)
-        self._pour_client = rospy.ServiceProxy('pour_instr', PourInstr)
-        self._release_client = rospy.ServiceProxy('release_instr', SetInstr)
+        self._grab_client = rospy.ServiceProxy('grab', SetInstr)
+        self._pour_client = rospy.ServiceProxy('pour', PourInstr)
+        self._release_client = rospy.ServiceProxy('stock', SetInstr)
         self._confirm_order_client = rospy.ServiceProxy('confirm_order', ConfirmOrder)
         # Parse Menu file
         self._menu_dict = parse_menu_xml(self.menu_path)
         # Build StoreRoom 
         self._storeroom = {}
         for item in self._menu_dict.keys():
-            for ingredient in item.ingredients:
+            for ingredient in self._menu_dict[item].ingredients:
                 if ingredient.value not in self._storeroom.keys():
                     self._storeroom[ingredient.value] = True
         # Make OrderTracker
@@ -84,6 +87,7 @@ class OrderHandler:
         self._new_orders = []
         self._new_order_num = 1 # Start orders at 1
         self._ORDER_LIMIT = 100 # Max number of simulatanous orders
+        self._CUP_SLOTS = 4
         
         # Set up run rate and main function
         self._RATE = 20 # in Hz
@@ -100,6 +104,9 @@ class OrderHandler:
         valid_order = True
         error_str = ""
         order_recipes = []
+        if len(req.orders) > self._CUP_SLOTS:
+            error_str += "No more than {self._CUP_SLOTS} can be ordered at a time\n"
+            valid_order = False
         for order in req.orders:
             # Check if order is on menu
             if order not in self._menu_dict.keys():
@@ -131,7 +138,7 @@ class OrderHandler:
         TODO: Better Doc
         """
         self._storeroom[req.ingredient] = req.available
-        return InventoryUpdateRepsonse()
+        return InventoryUpdateResponse()
 
 
     def _handle_verify_service(self, req):
@@ -234,7 +241,7 @@ class OrderHandler:
             rospy.logerr(e)
 
 
-    def main_loop(self):
+    def main_loop(self, event):
         """
         Main Execution loop TODO:Better Doc
         """
