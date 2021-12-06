@@ -1,0 +1,12 @@
+<launch>
+    <include file="$(find final_project_mixotics)/launch/tag_finder.launch">
+        <arg name="demo" value="false"/>
+        <arg name="use_color" value="false"/>
+    </include>
+    <include file="$(find panda_moveit_config)/launch/panda_control_moveit_rviz.launch">
+        <arg name="robot_ip" value="robot.franka.de"/>
+        <arg name="launch_franka_control" value="false"/>
+    </include>
+  <node name="order_handler" pkg="final_project_mixotics" type="order_handler"/>
+  <node name="mover" pkg="final_project_mixotics" type="mover"/>
+</launch>
