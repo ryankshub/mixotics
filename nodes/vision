@@ -143,17 +143,20 @@ class Vision:
 
     def calc_cup_avg(self, cup_array):
         count = [0, 0, 0, 0]
-        for i, status in cup_array:
-            if i >=65:
+        for i, status in enumerate(cup_array):
+            if i >=6:
                 inc = 0.6
-            elif i > 30 and i < 65:
+            elif i > 3 and i < 6:
                 inc = 0.3
             else:
                 inc = 0.1
+
             for idx, cup in enumerate(status):
                 if cup:
                     count[idx] = count[idx] + inc
-        cup_status = [True for c in count if c > 0.5 else False]
+                    
+        cup_status = [c > 0.5 for c in count]
+        # rospy.logerr(cup_status)
         return cup_status
 
     def cup_detection(self, color_image):
@@ -188,16 +191,18 @@ class Vision:
                     filled = True
                 else:
                     filled = False
+                cv2.drawContours(dilate, c_cup, -1, (0, 255, 0), 8)
+                self.show_image(dilate, f'Clipped - {k}')
             else: 
                 filled = False
 
-            
             cup_status[self.color_to_cup[k]] = filled
-            cv2.drawContours(dilate, c_cup, -1, (0, 255, 0), 8)
-            # self.show_image(dilate, f'Clipped - {k}')
+            
         self.cup_array.append(cup_status)
+        rospy.logerr(self.cup_array)
 
-        if len(self.cup_array) > 100:
+
+        if len(self.cup_array) > 10:
             del self.cup_array[0]
             cup_avg = self.calc_cup_avg(self.cup_array)
             self.pub_cup.publish(cup_avg)
@@ -350,8 +355,6 @@ def main():
         if pos_dict:
             for k, val in pos_dict.items():
                 v.broadcast(val, k)
-        else:
-            pass
         v.cup_detection(v.color_image)
         v.r.sleep()
 
