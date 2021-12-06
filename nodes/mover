@@ -10,7 +10,7 @@ from moveit_commander.conversions import pose_to_list
 from rospy.core import rospydebug
 from std_srvs.srv import EmptyResponse, SetBoolResponse, SetBool
 from std_msgs.msg import Empty
-from final_project_mixotics.srv import grab, stock, pour
+from final_project_mixotics.srv import grab, SetInstr, PourInstr
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
@@ -22,7 +22,7 @@ class mover():
         The functions inside mover are the init, reset, step, and follow functions. As well besides the 3 main functions it contains functions
         used to add objects in Rviz such as a table and an obstacle, as well as the wait_for_state_update function which aids in the simulation
         not breaking. 
-            Typical usage example:
+            Typical usage example
                 Mover = mover()
     '''
 
@@ -33,6 +33,8 @@ class mover():
         '''
                
         self.scene = moveit_commander.PlanningSceneInterface()
+
+        self.c_list = rospy.get_param("/coaster_list", [])
 
         group_name = "panda_arm"
 
@@ -54,16 +56,19 @@ class mover():
 
         # self.grab() 
 
-        self.grab = rospy.Service("grab", grab, self.grab) #Approach to ingredient done
+        self.grab = rospy.Service("grab", SetInstr, self.grab) #Approach to ingredient done
 
         # self.pour()
 
-        self.pour = rospy.Service("pour", pour, self.pour) #Takes ingrdient and pours it into cup
+        self.pour = rospy.Service("pour", PourInstr, self.pour) #Takes ingrdient and pours it into cup
 
         
         # self.stock()  
 
-        self.stock = rospy.Service("stock", stock, self.stock) #Takes ingrdient back to stocking area and resets arm back into ready position
+        self.stock = rospy.Service("stock", SetInstr, self.stock) #Takes ingrdient back to stocking area and resets arm back into ready position
+
+        self.receive = rospy.ServiceProxy('VerifyInstr', self.receive) # verification service, return 1 or 0 to see if task executed successfully
+
 
 
     def wait_for_state_update(
@@ -159,54 +164,54 @@ class mover():
                 return self.wait_for_state_update(box_is_known=True, timeout=timeout)
 
 
-    def readyPos(self, info):
+    def readyPos(self, ingredient):
 
         '''The readyPos function is neccesary for the mover class to allow for the panda arm to get in its ready position.
            The pre-set ready position makes it easier for a robot to make a plan to go to the location of the ingredients,
            as well as the location of the cups in which it must pour the drink. 
         '''   
+#To do: int2string
+        ingredientString = "ingredient0"+str(ingredient)
+        self.desiredIngredient = ingredientString
+        rospy.loginfo(ingredientString)
+        # self.desiredIngredient = "ingredient04"
+        self.desiredLocations = self.c_list    #Change ingredient name as required
 
-        while self.close != True:
-            self.desiredIngredient = info
-            rospy.loginfo(f'info: {info}')
-            # self.desiredIngredient = "ingredient04"
-            self.desiredLocation = "ingredient03"    #Change ingredient name as required
+        pos = self.scene.get_object_poses([self.desiredIngredient])
 
-            pos = self.scene.get_object_poses([self.desiredIngredient])
-            self.pos_pour = self.scene.get_object_poses([self.desiredLocation])
+        self.pos_pour = self.scene.get_object_poses([self.desiredLocations])
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
-            self.x = pos[self.desiredIngredient].position.x
-            self.x = self.x + 0.005
-            self.y = pos[self.desiredIngredient].position.y
-            self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
-            self.z = pos[self.desiredIngredient].position.z
+        self.x = pos[self.desiredIngredient].position.x
+        self.x = self.x + 0.005
+        self.y = pos[self.desiredIngredient].position.y
+        self.y = self.y+0.110 #Offset so it does not hit gripper, only works with specific input from objects 
+        self.z = pos[self.desiredIngredient].position.z
             
 
 #Do not change, these are the joints neccesary to grip glass 
 
-            initPos = [-0.157079633, 0.610865, 0.191986, -2.54818071, -1.50098316, 1.44862, 0.785398] #Specified ready position
+        initPos = [-0.157079633, 0.610865, 0.191986, -2.54818071, -1.50098316, 1.44862, 0.785398] #Specified ready position
             
-            self.move_group.set_joint_value_target(initPos)
+        self.move_group.set_joint_value_target(initPos)
 
-            success, traj_msg, planTime, err = self.move_group.plan()
+        success, traj_msg, planTime, err = self.move_group.plan()
 
-            if err.val == 1:
+        if err.val == 1:
 
-                rospy.loginfo("yeeha")
+            rospy.loginfo("yeeha")
 
-                self.move_group.execute(traj_msg, wait=True)
+            self.move_group.execute(traj_msg, wait=True)
 
                 # self.move_group.go(wait=True)
 
-            else:
-                rospy.loginfo("nooooo")
-                pass
+        else:
+            rospy.loginfo("nooooo")
+            pass
 
-            rospy.loginfo("Time to Move")
+        rospy.loginfo("Time to Move")
 
 
-            self.close = True
 
         return []
 
@@ -259,11 +264,13 @@ class mover():
         return[]
 
         
-    def movetopour(self):
+    def movetopour(self, cup):
 
         '''The movetopour function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
            from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
         '''
+#Figure out where to 
+        self.desiredLocation = "coaster0"+ str(cup)
 
 # #X, Y, Z variables need to be changed according to coordinates of bottle of interest
         self.x_pour = self.pos_pour[self.desiredLocation].position.x
@@ -280,7 +287,7 @@ class mover():
         yCurrent = current_pose.pose.position.y
         zCurrent = current_pose.pose.position.z
 
-        self.scene.remove_world_object(self.desiredLocation) #Removes bottle so the motion is not considred a collision
+        # self.scene.remove_world_object(self.desiredLocation) #Removes bottle so the motion is not considred a collision
         
         waypoints = []   
         current.position.z += self.z_pour-zCurrent
@@ -305,7 +312,7 @@ class mover():
 
         return []
         
-    def squeeze(self):
+    def squeeze(self, amount):
         
         '''The squeeze function is the hard grasp that the robot executes on a desired ingredient for it to squeeze the liquid into a cup.
         '''
@@ -318,13 +325,15 @@ class mover():
         client.send_goal(goal)
         client.wait_for_result(rospy.Duration.from_sec(15.0))
 
+        rospy.sleep(0.6*amount)
         return []
         
-    def movetodrop(self):
+    def movetodrop(self, ingredient):
 
         '''The movetodrop function takes the apriltag coordinates of the drink location on the drink flight and then navigates to an offset 
            from it. This function prepares the robot arm for pouring neccesary ingredients into the right cups to make requested drinks. 
         '''
+        dropLocation = ingredient
         rospy.loginfo("start move2drop")
         #Return to the initial pickup location
         
@@ -424,15 +433,25 @@ class mover():
         self.move_group.execute(plan, wait = True)
         return[] 
 
+    def receive(self):
+        return[]
+
     def grab(self, data):
 
         '''The grab function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
         '''   
-        info = data.ingredient
-        self.readyPos(info)
+        ingredient = data.ingredient #Ingredient Number
+
+        instruct = data.instr_id 
+
+        self.readyPos(ingredient)
+
         self.readyGrab()
+
         self.grasp()      #Initial grasp of ingredient
+
+        self.receive(instruct)
 
         return Empty()
 
@@ -442,33 +461,47 @@ class mover():
            execute the functions with respect to a desired ingredient. 
         ''' 
 
-        self.movetopour()
+        amount = data.amount_ml         # Get from menu
+
+        instruct = data.instr_id        #We receive we have as response
+
+        cup = data.cup_id               #Get from Ryan numbers, take desired location, match
+
+        self.movetopour(cup)
 
         self.tilt()
 
-        rospy.sleep(3)
+        #Adjusting the amount of ml the user receives
         
-        self.squeeze()
+        self.squeeze(amount)
 
         self.untilt()
         
         self.grasp()
 
-        return[]
+        self.receive(instruct)
+
+
+        return Empty()
 
     def stock(self, data):
 
         '''The stock function combines the readyPos and readyGrab functions into a single service that can be called by the user to
            execute the functions with respect to a desired ingredient. 
         ''' 
+        ingredient = data.ingredient
 
-        self.movetodrop()
+        instruct = data.instr_id 
+
+        self.movetodrop(ingredient) #ingredient goes in here
         
         self.gripperopen()
 
         self.retract()
 
-        return []
+        self.receive(instruct)
+
+        return Empty()
 
 
 if __name__ == "__main__":
