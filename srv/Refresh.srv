@@ -1,3 +1,5 @@
+# Refresh and check planning scene objects generated using apriltags
+
 ---
 bool all_found # indicates if all tags were detected
 string obj_found # indicates whether the tags were detected or not (can be converted to dict with json.loads())

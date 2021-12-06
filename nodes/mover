@@ -10,7 +10,7 @@ from moveit_commander.conversions import pose_to_list
 from rospy.core import rospydebug
 from std_srvs.srv import EmptyResponse, SetBoolResponse, SetBool
 from std_msgs.msg import Empty
-from final_project_mixotics.srv import SetInstr, SetInstrResponse, PourInstr, VerifyInstr, VerifyInstrRequest
+from final_project_mixotics.srv import SetInstr, SetInstrResponse, PourInstr, VerifyInstr, VerifyInstrRequest, Refresh
 from actionlib_msgs.msg import GoalStatusArray
 import copy
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
@@ -62,6 +62,7 @@ class mover():
 
         self.receive = rospy.ServiceProxy('verify', VerifyInstr) # verification service, return 1 or 0 to see if task executed successfully
 
+        self.refresh = rospy.ServiceProxy('update_scene/refresh', Refresh)
 
     def wait_for_state_update(
             self, box_is_known=False, box_is_attached=False, timeout=4
@@ -488,6 +489,25 @@ class mover():
 
         rospy.loginfo('grab gets instruct data from handler')
 
+        obj_check = False
+        num_check = 0
+        while obj_check is False:
+            resp = self.refresh()
+            obj_check = resp.all_found
+            if num_check > 5:
+                try:
+                    err_code = VerifyInstrRequest.FAILURE
+                    self.receive(instruct, err_code)
+                    rospy.loginfo('ROBOT: VERIFICATION SENT')
+                except rospy.ServiceException as e:
+                    print(f"Can't talk to logic")
+                    rospy.logerr(e)
+                return SetIntrResponse()
+            else:
+                num_check+=1
+                rospy.sleep(2)
+        
+        rospy.loginfo('check scene update')
         try:
             rospy.loginfo('grab tries in mover')
 
