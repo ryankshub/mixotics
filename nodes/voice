@@ -11,9 +11,18 @@ class Voice:
     def __init__(self):
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
         self.voice_text = None
+        self.menu = rospy.get_param('/drinks')
 
     def subscriber_callback(self, data):
         self.voice_text = data
+
+    def process_text(self):
+        split_text = self.voice_text.split(' ')
+        order = [s for s in split_text if s in self.menu]
+        
+
+
+    
 
 
 
