@@ -305,6 +305,9 @@ class OrderHandler:
                 elif instr_cmd[0] == InstrEnum.DELIVER:
                     # Auto-confirm a delivery instruction
                     self._order_tracker.verify_result(instr_id, True)
+                    self._active_complete = True
+                    self._active_instr = None
+                    rospy.loginfo(f"STATUS: {self._order_tracker._status}")
                 else:
                     # Actions we currently don't support go here
                     pass

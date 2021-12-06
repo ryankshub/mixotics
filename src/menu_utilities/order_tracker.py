@@ -88,6 +88,7 @@ class OrderTracker:
             self._instr_counter = (self._instr_counter % self._MAX_INSTRS) + 1
             # Grab open cup slot
             cup_id = self._grab_slot()
+            self._status[order_num][idx][2] = cup_id
             # Split recipe for instruction processing
             for step in recipe:
                 instr = (order_num, idx, cup_id, instr_id, step)
@@ -238,7 +239,7 @@ class OrderTracker:
             for i, name in enumerate(order_names):
                 # Log drink into tracker
                 idx = len(self._status[order_num])
-                self._status[order_num].append([False, name, order_recipes[i]])
+                self._status[order_num].append([False, name, 0])
                 parsed_orders.append((order_num, idx, order_recipes[i]))
         self._backlog += parsed_orders
         self._process_orders()
@@ -347,11 +348,11 @@ class OrderTracker:
             for order in self._status.keys():
                 bools = [x[0] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 drink_names = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
-                cup_ids = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
+                cup_ids = [x[2] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 if all(bools):
-                    self._status.pop(order_num)
+                    self._status.pop(order)
                     for cup_id in cup_ids:
                         self._release_slot(cup_id)
-                    return (order_num, drink_names, cup_ids)
+                    return (order, drink_names, cup_ids)
         
         return (0, [], [])
