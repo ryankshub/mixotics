@@ -13,7 +13,7 @@ class CupDetectionTest(unittest.TestCase):
 
     def test_array(self):
         """Tests truth values in published cup_status array."""
-        array = CupDetection([True, True, False, True])
+        array = CupDetection([True, True, True, True])
         self.assertEqual(array, self.msg)
 
 if __name__ == "__main__":
