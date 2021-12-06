@@ -23,17 +23,17 @@ class Voice:
     def __init__(self):
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
         self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
-        self.voice_text = None
+        self.voice_text = ''
         self.menu = rospy.get_param('/drinks')
 
         self.state = State.IDLE
         self.wake = ['sir', 'mix']
 
         # Main loop runs in a timer with frequency specified in launch file
-        self.tmr = rospy.Timer(rospy.Duration(10), self.main_loop)
+        self.tmr = rospy.Timer(rospy.Duration(1), self.main_loop)
         
-    def subscriber_callback(self, data):
-        self.voice_text = data
+    def subscriber_callback(self, s):
+        self.voice_text = s.data
 
     def process_text(self):
         split_text = self.voice_text.split(' ')
@@ -42,7 +42,7 @@ class Voice:
 
     def order_responses (self, order):
         if (len(order) > 0) and (len(order) <= 4):
-            msg = f'To confirm, you ordered the following: {" ".join(order)}'
+            msg = f'To confirm, you ordered the following: {", ".join(order)}. Is that correct?'
             self.state = State.CONFIRM
             return msg
         
@@ -58,10 +58,10 @@ class Voice:
 
 
     def wake_check(self):
-        return [d for d in self.voice_text if d in self.wake] == self.wake
+        return [d for d in self.voice_text.split(' ') if d in self.wake] == self.wake
 
     
-    def main_loop(self):
+    def main_loop(self, event):
         """ 
         The main control loop timer callback (checks state)
 
@@ -73,13 +73,13 @@ class Voice:
                 self.state = State.REQUEST
         elif self.state == State.REQUEST:
             self.pub.publish("What would you like to drink?")
-            rospy.sleep(5)
+            rospy.sleep(10)
             self.state = State.LISTEN
         elif self.state == State.LISTEN:
             order = self.process_text()
             message = self.order_responses(order)
             self.pub.publish(message)
-            rospy.sleep(5)
+            rospy.sleep(10)
         elif self.state == State.CONFIRM:
             rospy.loginfo("call order_handler")
         rospy.loginfo(self.state)
