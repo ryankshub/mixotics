@@ -50,7 +50,7 @@ class MenuItem:
         for instruction in self._recipe:
             if not isinstance(instruction[0], InstrEnum):
                 false_instructions.append(instruction)
-            if instruction[0] == InstrEnum.GRAB:
+            if instruction[0] == InstrEnum.GRAB or instruction[0] == InstrEnum.RELEASE:
                 if instruction[1] not in self._ingredients:
                     err_string = f"Ingredient {instruction[1]} is missing"
                     raise RuntimeError(err_string)

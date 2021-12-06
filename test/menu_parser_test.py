@@ -37,9 +37,9 @@ class MenuParserTestCase(unittest.TestCase):
         # Test Water item
         Water = menu_dict["water"]
         proper_ings_water = [StoreRoomEnum.WATER]
-        proper_rep_water = [(InstrEnum.PREP, None),
-                            (InstrEnum.GRAB, StoreRoomEnum.WATER),
-                            (InstrEnum.POUR, None),
+        proper_rep_water = [(InstrEnum.GRAB, StoreRoomEnum.WATER),
+                            (InstrEnum.POUR, 20),
+                            (InstrEnum.RELEASE, StoreRoomEnum.WATER),
                             (InstrEnum.DELIVER, None)]
         #Check name, ingredient, and recipe
         self.assertEqual("water", Water.name, 
@@ -52,12 +52,12 @@ class MenuParserTestCase(unittest.TestCase):
         # Test Lemonade item
         Lemonade = menu_dict["lemonade"]
         proper_ings_lemon = [StoreRoomEnum.WATER, StoreRoomEnum.LEMON]
-        proper_rep_lemon = [(InstrEnum.PREP, None),
-                            (InstrEnum.GRAB, StoreRoomEnum.WATER),
-                            (InstrEnum.POUR, None),
+        proper_rep_lemon = [(InstrEnum.GRAB, StoreRoomEnum.WATER),
+                            (InstrEnum.POUR, 10),
+                            (InstrEnum.RELEASE, StoreRoomEnum.WATER),
                             (InstrEnum.GRAB, StoreRoomEnum.LEMON),
-                            (InstrEnum.POUR, None),
-                            (InstrEnum.MIX, None),
+                            (InstrEnum.POUR, 10),
+                            (InstrEnum.RELEASE, StoreRoomEnum.LEMON),
                             (InstrEnum.DELIVER, None)]
         #Check name, ingredient, and recipe
         self.assertEqual("lemonade", Lemonade.name, 
@@ -70,13 +70,13 @@ class MenuParserTestCase(unittest.TestCase):
         # Test Tea item
         Tea = menu_dict["icedtea"]
         proper_ings_tea = [StoreRoomEnum.WATER, StoreRoomEnum.TEA]
-        proper_rep_tea = [(InstrEnum.PREP, None),
-                            (InstrEnum.GRAB, StoreRoomEnum.WATER),
-                            (InstrEnum.POUR, None),
-                            (InstrEnum.GRAB, StoreRoomEnum.TEA),
-                            (InstrEnum.POUR, None),
-                            (InstrEnum.MIX, None),
-                            (InstrEnum.DELIVER, None)]
+        proper_rep_tea = [(InstrEnum.GRAB, StoreRoomEnum.WATER),
+                          (InstrEnum.POUR, 10),
+                          (InstrEnum.RELEASE, StoreRoomEnum.WATER),
+                          (InstrEnum.GRAB, StoreRoomEnum.TEA),
+                          (InstrEnum.POUR, 10),
+                          (InstrEnum.RELEASE, StoreRoomEnum.TEA),
+                          (InstrEnum.DELIVER, None)]
         #Check name, ingredient, and recipe
         self.assertEqual("icedtea", Tea.name, 
             f"Tea item name should be icedtea, not {Tea.name}")
