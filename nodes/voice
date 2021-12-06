@@ -7,6 +7,7 @@ import rospy
 from std_msgs.msg import String
 from enum import Enum, auto
 import math
+from final_project_mixotics.srv import Order
 
 
 class State(Enum):
@@ -23,6 +24,10 @@ class Voice:
     def __init__(self):
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
         self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
+        self.process_order = rospy.ServiceProxy('process_order', Order)
+
+        self.order_msg = Order()
+
         self.voice_text = ''
         self.menu = rospy.get_param('/drinks')
 
@@ -64,6 +69,10 @@ class Voice:
         if 'yes' in self.voice_text:
             msg = 'Thank you for your order. We are processing it now.'
             self.state = State.IDLE
+            if 'iced tea' in self.order:
+                self.order = ['icedtea' for o in self.order if o == 'iced tea']
+            self.order_msg.orders = self.order
+            self.process_order(self.order_msg)
             return msg
             
         elif 'no' in self.voice_text:
@@ -100,7 +109,6 @@ class Voice:
             rospy.sleep(8)
         elif self.state == State.CONFIRM:
             self.pub.publish(self.confirm_check())
-            rospy.loginfo("call order_handler")
             rospy.sleep(8)
         rospy.loginfo(self.state)
 
