@@ -88,6 +88,7 @@ class OrderTracker:
             self._instr_counter = (self._instr_counter % self._MAX_INSTRS) + 1
             # Grab open cup slot
             cup_id = self._grab_slot()
+            self._status[order_num][idx][2] = cup_id
             # Split recipe for instruction processing
             for step in recipe:
                 instr = (order_num, idx, cup_id, instr_id, step)
@@ -98,7 +99,7 @@ class OrderTracker:
         modify_bool = len(self._instr_queue) > 0 and \
             (self._instr_queue[0][-1][0] == InstrEnum.GRAB or \
              self._instr_queue[0][-1][0] == InstrEnum.POUR or \
-             self._instr_queue[0][-1][0] == InstrEnum.DELIVERY)
+             self._instr_queue[0][-1][0] == InstrEnum.DELIVER)
 
         self._parse_instr_batch(new_instr_batch, modify_bool)
 
@@ -238,7 +239,7 @@ class OrderTracker:
             for i, name in enumerate(order_names):
                 # Log drink into tracker
                 idx = len(self._status[order_num])
-                self._status[order_num].append((False, name, order_recipes[i]))
+                self._status[order_num].append([False, name, 0])
                 parsed_orders.append((order_num, idx, order_recipes[i]))
         self._backlog += parsed_orders
         self._process_orders()
@@ -257,11 +258,12 @@ class OrderTracker:
                 instruction queue is empty, None is returned
 
         """
+    
         if (self._active_instr != None or len(self._instr_queue) == 0):
-            return None
+            return (None, self._active_instr != None, len(self._instr_queue) == 0)
 
         self._active_instr = self._instr_queue.pop(0)
-        return self._active_instr
+        return (self._active_instr, self._active_instr != None, len(self._instr_queue) == 0)
     
 
     def verify_result(self, instr_id, result):
@@ -274,11 +276,12 @@ class OrderTracker:
             bool result:
                 Whether the instruction completed successfully or not
         """
-        if instr_id == self._active_instr[4]:
+        if instr_id == self._active_instr[3]:
             idx = self._active_instr[1]
             order_num = self._active_instr[0]
-            if result and self._active_instr[-1][0] == InstrEnum.DELIVER:
-                self._status[order_num][idx][0] = True
+            if result:
+                if self._active_instr[-1][0] == InstrEnum.DELIVER:
+                    self._status[order_num][idx][0] = True
             else:
                 # Clean object of bad order
                 tainted_order = self._status.pop(order_num)
@@ -290,6 +293,8 @@ class OrderTracker:
                 self._instr_queue = [x for x in self._instr_queue if x[0] != order_num]
                 # Clear backlog
                 self._backlog = [x for x in self._backlog if x[0] != order_num]
+            
+            self._active_instr = None
 
 
     def get_cup_ids(self, order_num):
@@ -343,11 +348,11 @@ class OrderTracker:
             for order in self._status.keys():
                 bools = [x[0] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 drink_names = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
-                cup_ids = [x[1] for x in self._status.get(order, [(False, 'NUL', 0)])]
+                cup_ids = [x[2] for x in self._status.get(order, [(False, 'NUL', 0)])]
                 if all(bools):
-                    self._status.pop(order_num)
+                    self._status.pop(order)
                     for cup_id in cup_ids:
                         self._release_slot(cup_id)
-                    return (order_num, drink_names, cup_ids)
+                    return (order, drink_names, cup_ids)
         
         return (0, [], [])
