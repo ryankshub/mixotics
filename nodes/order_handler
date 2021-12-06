@@ -72,7 +72,7 @@ class OrderHandler:
         self._release_client = rospy.ServiceProxy('stock', SetInstr)
         self._confirm_order_client = rospy.ServiceProxy('confirm_order', ConfirmOrder)
         # Set up subscribers
-        self._cup_detection_sub = rospy.Subscriber('cup_status', CupDetection)
+        self._cup_detection_sub = rospy.Subscriber('cup_status', CupDetection, self.cup_detection_callback)
         # Parse Menu file
         self._menu_dict = parse_menu_xml(self.menu_path)
         # Build StoreRoom 
@@ -91,6 +91,11 @@ class OrderHandler:
         self._new_order_num = 1 # Start orders at 1
         self._ORDER_LIMIT = 100 # Max number of simulatanous orders
         self._CUP_SLOTS = 4
+
+        # Current status of cup slots
+        self.cup_status = None
+        # Recent state of cup slots
+        self.cup_states = ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
         
         # Set up run rate and main function
         self._RATE = 20 # in Hz
@@ -242,6 +247,19 @@ class OrderHandler:
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
             rospy.logerr(e)
+
+    def cup_detection_callback(self, cup_array):
+        if self.cup_status:
+            for i, c in enumerate(self.cup_status):
+                if self.cup_status[i] and not cup_array[i]:
+                    self.cup_states[i] = 'REMOVED'
+                elif not self.cup_status[i] and cup_array[i]:
+                    if self.cup_states[i] == 'REMOVED':
+                        self.cup_states[i] = 'RECEIVED'
+                    else:
+                        self.cup_states[i] = 'PLACED'
+        else:
+            self.cup_status = cup_array
 
 
     def main_loop(self, event):
