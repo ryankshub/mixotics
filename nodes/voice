@@ -26,20 +26,44 @@ class Voice:
 
     def __init__(self):
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
+        self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
         self.voice_text = None
         self.menu = rospy.get_param('/drinks')
 
         self.state = State.IDLE
+        self.wake = ['sir', 'mix', 'bot']
 
         # Main loop runs in a timer with frequency specified in launch file
         self.tmr = rospy.Timer(rospy.Duration(10), self.main_loop)
-
+        
     def subscriber_callback(self, data):
         self.voice_text = data
 
     def process_text(self):
         split_text = self.voice_text.split(' ')
         order = [s for s in split_text if s in self.menu]
+        return order
+
+    def order_responses (self, order):
+        if (len(order) > 0) and (len(order) =< 4):
+            msg = f'To confirm, you ordered the following: {" ".join(order)}'
+            self.state = State.CONFIRM
+            return msg
+        
+        elif len(order) > 4:
+            msg = f'The order limit is 4 items, please place your order again.'
+            self.state = State.REQUEST
+            return msg
+
+        else:
+            msg = f'Sorry, I did not catch your order. Please try again.'
+            self.state = State.REQUEST
+            return msg
+
+
+    def wake_check(self):
+        return [d for d in self.voice_text if d in self.wake] == self.wake
+
     
     def main_loop(self):
         """ 
