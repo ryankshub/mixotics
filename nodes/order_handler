@@ -234,12 +234,15 @@ class OrderHandler:
             while id_check: 
                 if ((rospy.Time().now().to_sec() - time) > 180):
                     rospy.logerr('Please come pick up your drinks. You are holding up the ordering system.')
+                check_list = []
                 for c in cup_ids:
                     if self.cup_states[c-1] == 'RECEIVED':
                         self.cup_states[c-1] = 'CONFIRMED'
+                        check_list.append(True)
                     else:
-                        break
-                id_check = False
+                        check_list.append(False)
+                if all(check_list):
+                    id_check = False
 
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
