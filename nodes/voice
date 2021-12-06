@@ -13,7 +13,6 @@ class Voice:
         self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
         self.voice_text = None
         self.menu = rospy.get_param('/drinks')
-        self.state = 'IDLE'
 
         self.wake = ['sir', 'mix', 'bot']
 
