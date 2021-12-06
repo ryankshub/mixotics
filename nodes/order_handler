@@ -5,7 +5,7 @@
 # Project imports
 from final_project_mixotics.srv import Order, OrderResponse
 from final_project_mixotics.srv import InventoryUpdate, InventoryUpdateResponse
-from final_project_mixotics.srv import VerifyInstr, VerifyInstrResponse
+from final_project_mixotics.srv import VerifyInstr, VerifyInstrRequest, VerifyInstrResponse
 from final_project_mixotics.srv import PourInstr, PourInstrRequest
 from final_project_mixotics.srv import SetInstr, SetInstrRequest
 from final_project_mixotics.srv import ConfirmOrder, ConfirmOrderRequest
@@ -64,7 +64,7 @@ class OrderHandler:
         # Set up services
         self._order_service = rospy.Service('process_order', Order, self._handle_order_service)
         self._invUp_service = rospy.Service('update_inventory', InventoryUpdate, self._handle_invUp_service)
-        self._verify_service = rospy.Service('verify_instr', VerifyInstr, self._handle_verify_service)
+        self._verify_service = rospy.Service('verify', VerifyInstr, self._handle_verify_service)
         # Set up clients
         self._grab_client = rospy.ServiceProxy('grab', SetInstr)
         self._pour_client = rospy.ServiceProxy('pour', PourInstr)
@@ -93,6 +93,7 @@ class OrderHandler:
         self._RATE = 20 # in Hz
         self._time_delta = 1./self._RATE
         rospy.Timer(rospy.Duration(self._time_delta), self.main_loop)
+        self.YELLLING_FLAG = False
         rospy.spin()
 
 
@@ -101,6 +102,7 @@ class OrderHandler:
         Validate new order and return order num
         TODO:Better Doc
         """
+    
         valid_order = True
         error_str = ""
         order_recipes = []
@@ -114,6 +116,7 @@ class OrderHandler:
                 error_str += f"Drink {order} is not on menu\n"
                 continue
             order_item = self._menu_dict[order]
+            rospy.loginfo(f"WATER's RECIPE is {order_item.recipe}")
             # Check if ingredients are available
             for ingredient in order_item.ingredients:
                 if not self._storeroom[ingredient.value]:
@@ -145,21 +148,25 @@ class OrderHandler:
         """
         Verifies if instruction was done correctly
         """
+        rospy.loginfo(f"RECEIVED VERIFICATION {req.instr_id}")
         if req.instr_id != self._active_instr[3]:
             # Something horrible has gone wrong 
             # This node closes itself
             raise rospy.ROSInterruptException
 
         else:
-            order_num = self._active_instr[0]    
-            if req.error_code == VerifyInstr.SUCCESS:
-                self._order_tracker.verify_results(req.instr_id, True)
+            order_num = self._active_instr[0]  
+            rospy.loginfo(f"RESULT {req.err_code}")  
+            if req.err_code == VerifyInstrRequest.SUCCESS:
+                self._order_tracker.verify_result(req.instr_id, True)
                 self._active_complete = True
                 self._active_instr = None
             else:
                 cup_ids = self._order_tracker.get_cup_ids(order_num)
                 self._send_failed_orders(order_num, cup_ids)
-                self._order_tracker.verify_results(req.instr_id, False)
+                self._order_tracker.verify_result(req.instr_id, False)
+                self._active_complete = True
+                self._active_instr = None
         return VerifyInstrResponse()
 
 
@@ -168,26 +175,31 @@ class OrderHandler:
         """
         Request robot grab ingredient
         """
+        rospy.loginfo(f"GRAB TIME")
         req = SetInstrRequest(instr_id=instr_id,
-                              ingredient_enum=instr[1].value)
-        rospy.wait_for_service("grab_instr")
+                              ingredient=instr[1].value)
+        rospy.wait_for_service("grab")
         try:
             self._grab_client(req)
+            rospy.loginfo(f"SENT GRAB {instr_id} FOR {instr[1].value}")
+            self.YELLLING_FLAG = True
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
 
 
-    def _send_pour(self, instr_id, instr):
+    def _send_pour(self, instr_id, instr, cup_id):
         """
         Request robot to pour ingredient into cup
         """
-        rospy.wait_for_service("pour_instr")
+        rospy.loginfo(f"POURING TIME")
         req = PourInstrRequest(instr_id=instr_id,
-                               cup_id=instr[1].value,
-                               amount_ml=instr[2])
+                               cup_id=cup_id,
+                               amount_ml=instr[1])
+        rospy.wait_for_service("pour")
         try:
             self._pour_client(req)
+            rospy.loginfo(f"SENT POUR {instr_id} FOR CUP: {cup_id} AMOUNT: {instr[1]}")
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
@@ -197,11 +209,13 @@ class OrderHandler:
         """
         Request robot to place ingredient back
         """
+        rospy.loginfo(f"RELEASE TIME")
         req = SetInstrRequest(instr_id=instr_id,
-                              ingredient_enum = instr[1].value)
-        rospy.wait_for_service("release_instr")
+                              ingredient = instr[1].value)
+        rospy.wait_for_service("stock")
         try:
             self._release_client(req)
+            rospy.loginfo(f"SENT RELEASE {instr_id} FOR {instr[1].value}")
         except rospy.ServiceException as e:
             print(f"Can't talk to robot")
             rospy.logerr(e)
@@ -219,6 +233,7 @@ class OrderHandler:
         rospy.wait_for_service("confirm_order")
         try:
             _ = self._confirm_order(req)
+            rospy.loginfo("ORDER {order_num} DONE with msg: {msg}")
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
             rospy.logerr(e)
@@ -233,9 +248,10 @@ class OrderHandler:
         req = ConfirmOrderRequest(order_num=order_num,
                                   success=False,
                                   msg=msg)
-        rospy.wait_for_service("confirm_order")
+        #rospy.wait_for_service("confirm_order")
         try:
-            _ = self._confirm_order(req)
+            #_ = self._confirm_order(req)
+            rospy.loginfo("ORDER {order_num} DONE with msg: {msg}")
         except rospy.ServiceException as e:
             print(f"Can't communicate with interface")
             rospy.logerr(e)
@@ -248,36 +264,55 @@ class OrderHandler:
         # Check if new_order is in
         if len(self._new_orders) > 0:
             # if new_order, process order queue
-            self._order_tracker.parse_new_orders(self._new_orders)
+            for order in self._new_orders:
+                self._send_confirm_orders(order[0], order[1], [x+1 for x in range(len(order[1]))])
+            # self._order_tracker.parse_new_orders(self._new_orders)
+            self._new_orders = []
         
         # If we are not processing an instruction, make a new one
-        if self._active_instr is None or self._active_complete:
-            # First, Check if any orders are complete
-            completed_order_num, drink_names, cup_ids = self._order_tracker.is_order_complete()
-            if completed_order_num != 0:
-                self._send_confirm_orders(completed_order_num, drink_names, cup_ids)
+        # if self._active_instr is None or self._active_complete:
+        #     if self.YELLLING_FLAG:
+        #         rospy.loginfo("TIME FOR NEW INSTRUCTION")
+        #     # First, Check if any orders are complete
+        #     completed_order_num, drink_names, cup_ids = self._order_tracker.is_order_complete()
+        #     if completed_order_num != 0:
+        #         rospy.loginfo(f"ORDER COMPLETE")
+        #         self._send_confirm_orders(completed_order_num, drink_names, cup_ids)
 
-            # Next, grab next instruction
-            next_instr = self._order_tracker.get_instruction()
-            # If present, send it
-            if next_instr is not None:
-                instr_id = next_instr[3]
-                instr_cmd = next_instr[4]
-                self._active_instr = next_instr
-                self._active_complete = False
+        #     # Next, grab next instruction
+        #     (next_instr, cond1, cond2) = self._order_tracker.get_instruction()
+        #     if self.YELLLING_FLAG:
+        #         rospy.loginfo("WHAT THE HELL WILL I DO NEXT?")
+        #         rospy.loginfo(self._order_tracker._instr_queue)
+        #         rospy.loginfo(f"ACTIVE INSTRUCTION IS NOT NONE {cond1}")
+        #         rospy.loginfo(f'ACTIVE INSTRUCTION IS {self._order_tracker._active_instr}')
+        #         rospy.loginfo(f'INSTR_QUEUE IS 0: {cond2}')
+        #         rospy.loginfo(next_instr)
+        #     # If present, send it
+        #     if next_instr is not None:
+        #         rospy.loginfo(f"NEW ACTION")
+        #         print(self._order_tracker._instr_queue)
+        #         cup_id = next_instr[2]
+        #         instr_id = next_instr[3]
+        #         instr_cmd = next_instr[4]
+        #         self._active_instr = next_instr
+        #         self._active_complete = False
 
-                if self._instr_cmd[0] == InstrEnum.GRAB:
-                    self._send_grab(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.POUR:
-                    self._send_pour(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.RELEASE:
-                    self._send_release(instr_id, instr_cmd)
-                elif instr_cmd[0] == InstrEnum.DELIVERY:
-                    # Auto-confirm a delivery instruction
-                    self._order_tracker.verify_result(instr_id, True)
-                else:
-                    # Actions we currently don't support go here
-                    pass
+        #         if instr_cmd[0] == InstrEnum.GRAB:
+        #             self._send_grab(instr_id, instr_cmd)
+        #         elif instr_cmd[0] == InstrEnum.POUR:
+        #             self._send_pour(instr_id, instr_cmd, cup_id)
+        #         elif instr_cmd[0] == InstrEnum.RELEASE:
+        #             self._send_release(instr_id, instr_cmd)
+        #         elif instr_cmd[0] == InstrEnum.DELIVER:
+        #             # Auto-confirm a delivery instruction
+        #             self._order_tracker.verify_result(instr_id, True)
+        #             self._active_complete = True
+        #             self._active_instr = None
+        #             rospy.loginfo(f"STATUS: {self._order_tracker._status}")
+        #         else:
+        #             # Actions we currently don't support go here
+        #             pass
 
 
 #Activate 'order_handler' node

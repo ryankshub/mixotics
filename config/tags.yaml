@@ -22,14 +22,11 @@ standalone_tags:
     {id: 0,  size: 0.03,  name: "ingredient01_tag"},
     {id: 1,  size: 0.03,  name: "ingredient02_tag"},
     {id: 2,  size: 0.03,  name: "ingredient03_tag"},
-    {id: 3,  size: 0.03,  name: "ingredient04_tag"},
     {id: 4,  size: 0.06,  name: "panda_tag"},
     {id: 5,  size: 0.03,  name: "coaster01_tag"},
     {id: 6,  size: 0.03,  name: "coaster02_tag"},
     {id: 7,  size: 0.03,  name: "coaster03_tag"},
-    {id: 8,  size: 0.03,  name: "table01_tag"},
-    {id: 9,  size: 0.03,  name: "table02_tag"},
-    {id: 10, size: 0.03,  name: "table03_tag"}
+    {id: 9,  size: 0.03,  name: "coaster04_tag"}
   ]
 # ## Tag bundle definitions
 # ### Remarks

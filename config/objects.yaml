@@ -1,5 +1,5 @@
-ingredient_list: ["ingredient01", "ingredient02", "ingredient03", "ingredient04"] # list of ingredient names
-coaster_list: ["coaster01", "coaster02", "coaster03"] # list of coaster names
+ingredient_list: ["ingredient01", "ingredient02", "ingredient03"] # list of ingredient names
+coaster_list: ["coaster01", "coaster02", "coaster03", "coaster04"] # list of coaster names
 table_list: [] # list of tables
 bottle_height: 0.1215 # height of bottle (meters)
 bottle_radius: 0.024 # radius of bottle (meters)

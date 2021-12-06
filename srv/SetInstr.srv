@@ -4,3 +4,5 @@
 
 uint16 instr_id        # Id of the instruction
 uint8 ingredient       # StoreRoomEnum value of the ingredient to grab
+---
+# Empty Response

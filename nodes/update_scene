@@ -189,10 +189,10 @@ class SceneUpdater:
                     obj.pose.position.y = trans.transform.translation.y
                     obj.pose.position.z = trans.transform.translation.z - (0.5*0.0025) # offset for coaster
 
-                    quat = (trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w)
+                    quat = (0, 0, 0, 1)
                     obj.pose.orientation = Quaternion(*quat)
 
-                    self.scene.add_box(c_name, obj, size=(self.c_d,  0.0025, self.c_d,))
+                    self.scene.add_box(c_name, obj, size=(self.c_d, self.c_d, 0.0025))
 
                 rospy.loginfo(c_name + "_tag transform is: " + str(trans))
 
