@@ -7,11 +7,7 @@ import rospy
 from std_msgs.msg import String
 from enum import Enum, auto
 import math
-from std_srvs.srv import Empty, EmptyResponse
-import tf2_ros
-import geometry_msgs.msg
-from tf_conversions import transformations
-from homework2.compute import FigureEight, Kinematics
+
 
 class State(Enum):
     """
@@ -31,7 +27,7 @@ class Voice:
         self.menu = rospy.get_param('/drinks')
 
         self.state = State.IDLE
-        self.wake = ['sir', 'mix', 'bot']
+        self.wake = ['sir', 'mix']
 
         # Main loop runs in a timer with frequency specified in launch file
         self.tmr = rospy.Timer(rospy.Duration(10), self.main_loop)
@@ -45,7 +41,7 @@ class Voice:
         return order
 
     def order_responses (self, order):
-        if (len(order) > 0) and (len(order) =< 4):
+        if (len(order) > 0) and (len(order) <= 4):
             msg = f'To confirm, you ordered the following: {" ".join(order)}'
             self.state = State.CONFIRM
             return msg
@@ -86,6 +82,7 @@ class Voice:
             rospy.sleep(5)
         elif self.state == State.CONFIRM:
             rospy.loginfo("call order_handler")
+        rospy.loginfo(self.state)
 
 
 def main():
