@@ -108,7 +108,7 @@ and an explanation of why the order could not be accepted.
 ## Demonstrations
 
 ### Serving a Drink
-![Drink Serving Demo](videos/demo.gif)
+![Drink Serving Demo](videos/demo_final.gif)
 
 ### Verbal Order Processing
 This is a link to our verbal order processing system in action: https://www.youtube.com/watch?v=76QoueeHdhA&t=9s
