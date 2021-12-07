@@ -77,7 +77,9 @@ This package contains:
 - src:
     1. `menu_utilities`: custom python package which is responsible for codifing menu and providing helper functions for processing/tracking orders
 - test:
-    Location of unit and integration testing
+    * Location of integration testing
+- unittest:
+    * Location of unit testing
 - models:
     * STL files for ingredient bottle models 
 - materials:
