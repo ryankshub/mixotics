@@ -225,7 +225,7 @@ catkin_install_python(PROGRAMS
 
 ## Add folders to be run by python nosetests
 if (CATKIN_ENABLE_TESTING)
-  catkin_add_nosetests(test)
+  catkin_add_nosetests(unittest)
   find_package(rostest REQUIRED)
   add_rostest(test/cup_detection.test)
 endif()
