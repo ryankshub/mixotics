@@ -36,19 +36,6 @@ This package enables the Franka robot to create and serve a variety of drinks.
 14. The robot can now fulfill an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
 
 
-## High Level Concepts and Overall System Architecture
-
-The process loop of the robot is as follows:
-1. Take an order for the customer and prepare to execute the order.
-2. Survey the workspace and update the planning scene with the location of each drink
-3. Execute the grab service - the grab service involves the robot resetting to a default location where it has good access to the entire workspace to be used, a cartesian motion to bring the robotic arm to the first ingredient with the grippers in place to grasp the bottle, and finally a grasping action that allows for the bottle to be lightly grasped without squeezing too hard.
-4. Execute the pour service - the pour service involves the robot executing a cartesian motion to bring the ingredient to a spot offset from the coasters location where it can be squeezed and pour an ingredient into each cup, a joint angle command to tilt the end effector with the bottle which allows the pour to be directly into the cup, a squeeze action which uses force control to squeeze the grippers and finally a reverse of the joint angle command previously sent to bring the gripper horizontal with the table.
-5. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
-6. Repeat 3-5 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
-
-The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
-
-
 ## Contents
 
 This package contains:
@@ -108,7 +95,7 @@ This package contains:
 ## High Level Concepts and Overall System Architecture
 
 The process loop of the robot is as follows:
-1. Take an order for the customer and validate it. Validation ensures the drink is on the menu and the ingredients are in stock to make the drink. 
+1. Take an order from the customer and validate it. Validation ensures the drink is on the menu and the ingredients are in stock to make the drink. 
 2. If the order is valid, the customer is given a postive order number; the system will use this number to track it. If the order is not valid, the system returns an order number of 0
 and an explanation of why the order could not be accepted.
 3. Once the order is accepted, the recipes of each drink in the order are processed into a list of instructions for the robot to execute. Instructions either tell the robot to grab an ingredient, pour an amount into a cup, or stock the ingredient. Until the order is complete, each instruction is sent to the robot one at a time.
