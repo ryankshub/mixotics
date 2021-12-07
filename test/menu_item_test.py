@@ -19,6 +19,9 @@ class MitemTestCase(unittest.TestCase):
     Test Case for menu item object
     """
     def test_basic_case(self):
+        """
+        Basic test case of defining 'lemonade'
+        """
         good_name = "lemonade"
         good_ingreds = [StoreRoomEnum['WATER'], StoreRoomEnum['LEMON']]
         good_recipe = [(InstrEnum['PREP'], None), 
@@ -39,6 +42,10 @@ class MitemTestCase(unittest.TestCase):
 
 
     def test_nominal_case(self):
+        """
+        Test the case where not all ingredients are used
+        This is a valid menu item
+        """
         good_name = "special"
         good_ingreds = [StoreRoomEnum['WATER'], StoreRoomEnum['LEMON']]
         good_recipe = [(InstrEnum['PREP'], None), 
@@ -57,6 +64,10 @@ class MitemTestCase(unittest.TestCase):
 
 
     def test_invalid_ingredient(self):
+        """
+        Test the case where an ill-formatted ingredient has been passed in
+        This is an invalid menu item
+        """
         bad_name = "badstore"
         bad_ingreds = [StoreRoomEnum['WATER'], "Lemon"]
         bad_recipe = [(InstrEnum['PREP'], None), 
@@ -75,6 +86,11 @@ class MitemTestCase(unittest.TestCase):
 
 
     def test_missing_ingredient(self):
+        """
+        Test the case where a recipe contains an ingredient 
+        that is not listed
+        This is an invalid menu item
+        """
         bad_name = "needslemon"
         bad_ingreds = [StoreRoomEnum['WATER']]
         bad_recipe = [(InstrEnum['PREP'], None), 
@@ -93,6 +109,10 @@ class MitemTestCase(unittest.TestCase):
 
 
     def test_invalid_recipe(self):
+        """
+        Test an ill-formatted recipe
+        This is an invalid menu item
+        """
         bad_name = "recipeblog"
         bad_ingreds = [StoreRoomEnum['WATER'], StoreRoomEnum['LEMON']]
         bad_recipe = [(InstrEnum['PREP'], None), 

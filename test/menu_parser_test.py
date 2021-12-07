@@ -19,6 +19,10 @@ class MenuParserTestCase(unittest.TestCase):
     Test cases for menu parser
     """
     def test_basic_menu(self):
+        """
+        Given a simple menu, ensure all drink, ingredients, and
+        recipes are parsed correctly
+        """
         # Basic menu makes water, lemonade, and tea
         menu_file = "test_artifacts/basic_menu.xml"
         menu_dict = parse_menu_xml(menu_file)
