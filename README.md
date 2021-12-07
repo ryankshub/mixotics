@@ -10,7 +10,7 @@ Authors and Maintainers:
 ## **Description**
 This package enables the Franka robot to create and serve a variety of drinks.
 
-## **User Guide (temp)**
+## **User Guide **
 
 1. Download the `mixotics.rosinstall` file into the /src directory of the catkin workspace. This file will install the ros dependencies required to run this project.
 2. Use `wstool init` and `wstool merge mixotics.rosinstall` to initialize the workspace and merge the rosinstall file with the workspace. Run `wstool update` to ensure latest versions of all packages are installed.
@@ -30,7 +30,7 @@ This package enables the Franka robot to create and serve a variety of drinks.
 11. We can now start the franka_ros controller. To do so, run `roslaunch franka_control franka_control.launch robot_ip:=robot.franka.de`. Keep this terminal open - if this process stops running, it needs to be restarted to be able to run the robot.
 12. Now that the connection to the robot is setup and the franka_ros controllers are running, run the launchfile `roslaunch panda_moveit_config panda_control_moveit_rviz.launch launch_franka_control:=false robot_ip:=robot.franka.de` to run moveit and rviz.
 13. In another terminal, run `roslaunch final_project_mixotics mixotics.launch` to run the `fixed_tag`, `vision`, `order_handler`, `update_scene` and `mover` nodes.
-14. 
+14. The robot can now fulfil an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
 
 
 ## Contents
@@ -51,7 +51,7 @@ This package contains:
     5. `tags.yaml`: contains list of AprilTag IDs and sizes for each object (used without CV color detection)
 - launch: 
     1. `tag_finder.launch`: sets up the nodes for object detection and planning scene updates using a RealSense d435i camera
-    2. `mixotics.launch`: master launch file for 
+    2. `mixotics.launch`: master launch file for the robot - this runs all the nodes required to update the planning scene as well as move the robot 
 - srv:
     1. `ConfirmOrder.srv`: 
     2. `InventoryUpdate.srv`: 
@@ -71,6 +71,9 @@ This package contains:
 - `README.md`
     * Hello There!
 
+
+## High Level Concepts and Overall System Architecture
+
 ## **Dependencies and Installation**
 ```
 # run this command line tool while in a custom workspace
@@ -78,8 +81,14 @@ vcs import < mixotics.rosinstall
 ```
 
 
-### *ROS Dependencies*
-This package was developed and tested in ros-noetic. TODO
+## *ROS Dependencies and Libraries Used*
+This package was developed and tested in ros-noetic. 
+
+ *pyrealsesnse2* - Library to use and run the Intel Realsense D435i depth camera.
+ *MoveIt* - The motion planning library used to provide the trajectories that enabled the robot to perform its tasks.
+ *libfranka/ franka_ros* - This library allowed  low-level control of the Emika Franka Panda robot and control of the gripper.
+
+
 
 ### *Python Dependencies*
 All code for this package was developed and test in Python 3. TODO  
