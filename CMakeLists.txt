@@ -55,13 +55,14 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  Order.srv
-  InventoryUpdate.srv
-  VerifyInstr.srv
-  PourInstr.srv
-  SetInstr.srv
-  Refresh.srv
   ConfirmOrder.srv
+  InventoryUpdate.srv
+  Order.srv
+  PourInstr.srv
+  Refresh.srv
+  SetInstr.srv
+  VerifyInstr.srv
+  
 )
 
 ## Generate actions in the 'action' folder
@@ -74,9 +75,9 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  # Or other packages containing msgs 
+  geometry_msgs
   moveit_msgs
-  geometry_msgs 
+  std_msgs  # Or other packages containing msgs 
 )
 
 ################################################
@@ -110,11 +111,12 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
 catkin_package(CATKIN_DEPENDS
-  rospy
-  std_msgs
   geometry_msgs
   message_runtime
   moveit_msgs
+  rospy
+  std_msgs
+  
 )
 
 ###########
