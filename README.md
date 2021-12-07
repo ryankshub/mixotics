@@ -14,6 +14,7 @@ This package enables the Franka robot to create and serve a variety of drinks.
 
 1. Download the `mixotics.rosinstall` file into the /src directory of the catkin workspace. This file will install the ros dependencies required to run this project.
 2. Use `wstool init` and `wstool merge mixotics.rosinstall` to initialize the workspace and merge the rosinstall file with the workspace. Run `wstool update` to ensure latest versions of all packages are installed.
+3. Install any python dependencies needed to run the software. Refer to the [python dependencies](#python-dependencies) section.
 3. Source and `catkin_make` the workspace (source it as `source ~/$(workspace name)/devel_isolated/setup.bash`).
 4. To connect to the robot, plug in the ethernet cord from the robots workstation PC into the ethernet port on the users computer.
 5. Run `ping robot.franka.de` to ensure that the connection is successful.
@@ -38,14 +39,22 @@ This package enables the Franka robot to create and serve a variety of drinks.
 This package contains:
 
 - nodes:
-    1. `fixed_tag`: generates a static transform between the robot and an AprilTag placed in front of the robot base
-    2. `update_scene`: adds objects (i.e., ingredients, coasters) marked by AprilTags or color detection to the moveit planning scene
-    3. `vision`: detects spaces occupied by cups in the custom drink holder
-    4. `mover`: defines services for robot movements (i.e., grab, pour and set) using moveit planning and action libraries
-    5. `order_handler`: processes orders from the user and generates a list of instructions used by the mover node
-    6. `voice`: processes verbal orders from the user and uses service proxy to integrate with order_handler. Integration to move robot using verbal orders is still in development. Verbal order processing alone is functional.
+    1. `fixed_tag`: Generates a static transform between the robot and an 
+            AprilTag placed in front of the robot base.
+    2. `update_scene`: Adds objects (i.e., ingredients, coasters) marked by 
+            AprilTags or color detection to the moveit planning scene.
+    3. `vision`: Detects occupied spaces in the custom drink holder.
+    4. `mover`: Defines services for robot movements (i.e., grab, pour, and stock) 
+            using moveit planning and action libraries
+    5. `order_handler`: Processes user's orders and generates a list of 
+            instructions used by the mover node. Once all instructions for an order 
+            are complete, sends confirmation to the user.
+    6. `voice`: Processes verbal orders from the user and uses service proxy to
+            integrate with `order_handler`. Note: Integration to move robot using 
+            verbal ordering is still in development. Verbal order processing alone is 
+            functional.
 - config:
-    1. `menu.xml`: configuration file for the menu including the recipe instructions for each drink
+    1. `menu.xml`: configuration file for the menu containing the name, ingredients, recipe instructions for each drink
     2. `objects.yaml`: contains list of names for ingredients, coasters and tables (optional) as well as associated object dimensions
     3. `settings.yaml`: contains AprilTag code parameters such as tag family name and detection parameters
     4. `tags_color.yaml`: contains list of AprilTag IDs and sizes for each object (used with CV color detection)
@@ -54,17 +63,25 @@ This package contains:
     1. `tag_finder.launch`: sets up the nodes for object detection and planning scene updates using a RealSense d435i camera
     2. `mixotics.launch`: master launch file for the robot - this runs all the nodes required to update the planning scene as well as move the robot 
 - srv:
-    1. `ConfirmOrder.srv`: 
-    2. `InventoryUpdate.srv`: 
-    3. `Order.srv`:
-    4. `PourInstr.srv`:
+    1. `ConfirmOrder.srv`: Request/Response for indicting an order is complete. Includes value to determine if order was mase successfully or not
+    2. `InventoryUpdate.srv`: Request for updating the whether an ingredient is available of not
+    3. `Order.srv`: Request contain a list of drinks the user wants
+    4. `PourInstr.srv`: Request structure used to tell the robot to pour an ingredient in a certain cup
     5. `Refresh.srv`: checks planning scene updates from `update_scene/refresh`
-    6. `SetInstr.srv`:
-    7. `VerifyInstr.srv`:
+    6. `SetInstr.srv`: Request used to tell the robot which ingredient to grab or stock
+    7. `VerifyInstr.srv`: Request used to confirm robot has completed instuction from `order_handler`
+- msg:
+    1. `CupDetection.msg`: Array to indicate which coaster spot are filled with cups.
+- src:
+    1. `menu_utilities`: custom python package which is responsible for codifing menu and providing helper functions for processing/tracking orders
+- test:
+    Location of unit and integration testing
 - models:
     * STL files for ingredient bottle models 
 - materials:
     * PDF files for AprilTags to be printed
+- bag: 
+    * location for Rosbag file used for testing
 - `package.xml`
     * Package configuration
 - `CMakeLists.txt`
@@ -76,14 +93,15 @@ This package contains:
 ## High Level Concepts and Overall System Architecture
 
 The process loop of the robot is as follows:
-1. Take an order for the customer and prepare to execute the order.
-2. Survey the workspace and update the planning scene with the location of each drink
-3. Execute the grab service - the grab service involves the robot resetting to a default location where it has good access to the entire workspace to be used, a cartesian motion to bring the robotic arm to the first ingredient with the grippers in place to grasp the bottle, and finally a grasping action that allows for the bottle to be lightly grasped without squeezing too hard.
-4. Execute the pour service - the pour service involves the robot executing a cartesian motion to bring the ingredient to a spot offset from the coasters location where it can be squeezed and pour an ingredient into each cup, a joint angle command to tilt the end effector with the bottle which allows the pour to be directly into the cup, a squeeze action which uses force control to squeeze the grippers and finally a reverse of the joint angle command previously sent to bring the gripper horizontal with the table.
-5. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
-6. Repeat 3-5 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
-
-The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
+1. Take an order for the customer and validate it. Validation ensures the drink is on the menu and the ingredients are in stock to make the drink. 
+2. If the order is valid, the customer is given a postive order number; the system will use this number to track it. If the order is not valid, the system returns an order number of 0
+and an explanation of why the order could not be accepted.
+3. Once the order is accepted, the recipes of each drink in the order are processed into a list of instructions for the robot to execute. Instructions either tell the robot to grab an ingredient, pour an amount into a cup, or stock the ingredient. Until the order is complete, each instruction is sent to the robot one at a time.
+4. Meanwhile, the robot surveys the workspace and update the planning scene with the location of ingredients and coasters. Based on the type of the instruction, the robot can perform one of the following in 5-7:
+5. Execute the grab service - the grab service involves the robot resetting to a default location where it has good access to the entire workspace to be used, a cartesian motion to bring the robotic arm to the first ingredient with the grippers in place to grasp the bottle, and finally a grasping action that allows for the bottle to be lightly grasped without squeezing too hard.
+6. Execute the pour service - the pour service involves the robot executing a cartesian motion to bring the ingredient to a spot offset from the coasters location where it can be squeezed and pour an ingredient into each cup, a joint angle command to tilt the end effector with the bottle which allows the pour to be directly into the cup, a squeeze action which uses force control to squeeze the grippers and finally a reverse of the joint angle command previously sent to bring the gripper horizontal with the table.
+7. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
+8. Repeat 4-7 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
 
 
 
@@ -96,7 +114,7 @@ This package was developed and tested in ros-noetic.
 
 
 
-### *Python Dependencies*
+## *Python Dependencies*
 All code for this package was developed and test in Python 3.
 
 
