@@ -9,6 +9,7 @@ from final_project_mixotics.srv import VerifyInstr, VerifyInstrRequest, VerifyIn
 from final_project_mixotics.srv import PourInstr, PourInstrRequest
 from final_project_mixotics.srv import SetInstr, SetInstrRequest
 from final_project_mixotics.srv import ConfirmOrder, ConfirmOrderRequest
+
 from menu_utilities.enum_defs import InstrEnum
 from menu_utilities.menu_parser import parse_menu_xml
 from menu_utilities.order_tracker import OrderTracker
@@ -28,18 +29,30 @@ class OrderHandler:
     customers, and track status of orders
 
     SERVICES:
-        process_order Order
+        process_order Order - 
+            Takes in a list of drink names(string) and returns a corresponding
+            order number and thank you string. These names are converted to menu items
+            and given to the Order Tracker for processing
 
-        update_inventory InventoryUpdate
+        update_inventory InventoryUpdate -
+            Use this service to state whether an ingredient in available
 
-        verify_instr VerifyInstr
+        verify_instr VerifyInstr- 
+            This service confirms an instruction is completed successfully or not. 
+            It should contain the id of the instruction and an err_code. The service returns
+            nothing
 
     CLIENTS:
-        grab_instr SetInstr
+        grab_instr SetInstr - 
+            Request the robot to grab a certain ingredient. 
 
         pour_instr PourInstr
+            Request the robot to pour an amount of a certain ingredient
+            into a certain cup. This request does specify which ingredient, 
+            it 
 
         release_instr SetInstr
+            Request
 
         confirm_order ConfirmOrder
 
