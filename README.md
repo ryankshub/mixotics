@@ -118,7 +118,13 @@ and an explanation of why the order could not be accepted.
 7. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
 8. Repeat 4-7 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
 
+## Demonstrations
 
+### Serving a Drink
+![Drink Serving Demo](videos/demo.gif)
+
+### Verbal Order Processing
+This is a link to our verbal order processing system in action: https://www.youtube.com/watch?v=76QoueeHdhA&t=9s
 
 ## *ROS Dependencies and Libraries Used*
 This package was developed and tested in ros-noetic. 
