@@ -18,12 +18,21 @@ from math import pi
 
 class mover():
 
-    '''The mover class contains the functions neccesary for a robot in gazebo to reset, set, and follow waypoints to move a px100 robotic arm.
-        The functions inside mover are the init, reset, step, and follow functions. As well besides the 3 main functions it contains functions
-        used to add objects in Rviz such as a table and an obstacle, as well as the wait_for_state_update function which aids in the simulation
-        not breaking. 
-            Typical usage example
-                Mover = mover()
+    
+    ''' 
+    ROS Node responsible for handling motion and gripper action of the Emika Franka robot. The 
+    node also adds a table and a hitbox in Rviz.
+    The node provides three services, comprised of multiple functions each, which govern the robots motion and gripper action as called.
+    The functions use moveit_commander for motion planning of the arm, and franka_gripper to control the gripper
+    Typical usage example:
+    Mover = mover()
+    
+    SERVICES:
+        grab SetInstr  - Service that resets robot to an initial location, moves to a pickup location and grasps the drink.
+        pour PourInstr - Service that moves robot to a pouring location, tilts and squeezes the ingredient bottle, and untilts.
+        stock SetInstr - Service that moves robot back to pickup location and releases ingredient bottle.
+    CLIENTS:
+        receive VerifyInstr
     '''
 
     def __init__(self):
