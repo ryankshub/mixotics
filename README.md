@@ -115,7 +115,12 @@ This package was developed and tested in ros-noetic.
 
 
 ## *Python Dependencies*
-All code for this package was developed and test in Python 3.
+All code for this package was developed and test in Python 3. 
+
+Additionally, users will need to install [OpenCv](https://docs.opencv.org/4.5.4/) using:
+```python
+pip3 install opencv-python
+```
 
 
 ## *Physical Equipment*
