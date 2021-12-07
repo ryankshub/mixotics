@@ -1,0 +1,360 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>menu_utilities package &#8212; final_project_mixotics 0.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="src" href="modules.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="index.html">final_project_mixotics 0.0.0 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="modules.html" title="src"
+             accesskey="P">previous</a> |
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="menu-utilities-package">
+<h1>menu_utilities package<a class="headerlink" href="#menu-utilities-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-menu_utilities.enum_defs">
+<span id="menu-utilities-enum-defs-module"></span><h2>menu_utilities.enum_defs module<a class="headerlink" href="#module-menu_utilities.enum_defs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="menu_utilities.enum_defs.InstrEnum">
+<em class="property">class </em><code class="descclassname">menu_utilities.enum_defs.</code><code class="descname">InstrEnum</code><a class="reference internal" href="_modules/menu_utilities/enum_defs.html#InstrEnum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>Enumeration representing the high-level commands
+to the Franka robot</p>
+<p>PREP ~ Prepare a cup for client’s drink
+GRAB ~ Grab a certain ingredient
+POUR ~ Pour grabbed ingredient
+RELEASE ~ Release grabbed ingredient
+MIX ~ Mix current ingredients in client’s cup
+DELIVER ~ Give cup to client (Indicate cup is done)</p>
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.DELIVER">
+<code class="descname">DELIVER</code><em class="property"> = 5</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.DELIVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.GRAB">
+<code class="descname">GRAB</code><em class="property"> = 1</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.GRAB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.MIX">
+<code class="descname">MIX</code><em class="property"> = 4</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.MIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.POUR">
+<code class="descname">POUR</code><em class="property"> = 2</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.POUR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.PREP">
+<code class="descname">PREP</code><em class="property"> = 0</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.PREP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.InstrEnum.RELEASE">
+<code class="descname">RELEASE</code><em class="property"> = 3</em><a class="headerlink" href="#menu_utilities.enum_defs.InstrEnum.RELEASE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="menu_utilities.enum_defs.StoreRoomEnum">
+<em class="property">class </em><code class="descclassname">menu_utilities.enum_defs.</code><code class="descname">StoreRoomEnum</code><a class="reference internal" href="_modules/menu_utilities/enum_defs.html#StoreRoomEnum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.enum_defs.StoreRoomEnum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>Enumeration representing the current ingredients we support</p>
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.StoreRoomEnum.LEMON">
+<code class="descname">LEMON</code><em class="property"> = 3</em><a class="headerlink" href="#menu_utilities.enum_defs.StoreRoomEnum.LEMON" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.StoreRoomEnum.SUGAR">
+<code class="descname">SUGAR</code><em class="property"> = 2</em><a class="headerlink" href="#menu_utilities.enum_defs.StoreRoomEnum.SUGAR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.StoreRoomEnum.TEA">
+<code class="descname">TEA</code><em class="property"> = 4</em><a class="headerlink" href="#menu_utilities.enum_defs.StoreRoomEnum.TEA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.enum_defs.StoreRoomEnum.WATER">
+<code class="descname">WATER</code><em class="property"> = 1</em><a class="headerlink" href="#menu_utilities.enum_defs.StoreRoomEnum.WATER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-menu_utilities.menu_item">
+<span id="menu-utilities-menu-item-module"></span><h2>menu_utilities.menu_item module<a class="headerlink" href="#module-menu_utilities.menu_item" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="menu_utilities.menu_item.MenuItem">
+<em class="property">class </em><code class="descclassname">menu_utilities.menu_item.</code><code class="descname">MenuItem</code><span class="sig-paren">(</span><em>name</em>, <em>ingredients</em>, <em>instructions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/menu_item.html#MenuItem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.menu_item.MenuItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Representation of a menu item the Franka robot can make.</p>
+<dl class="attribute">
+<dt id="menu_utilities.menu_item.MenuItem.ingredients">
+<code class="descname">ingredients</code><a class="headerlink" href="#menu_utilities.menu_item.MenuItem.ingredients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the ingredients for the menu item</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.menu_item.MenuItem.name">
+<code class="descname">name</code><a class="headerlink" href="#menu_utilities.menu_item.MenuItem.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get name of the item</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="menu_utilities.menu_item.MenuItem.recipe">
+<code class="descname">recipe</code><a class="headerlink" href="#menu_utilities.menu_item.MenuItem.recipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the recipe for the menu item</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-menu_utilities.menu_parser">
+<span id="menu-utilities-menu-parser-module"></span><h2>menu_utilities.menu_parser module<a class="headerlink" href="#module-menu_utilities.menu_parser" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="menu_utilities.menu_parser.parse_menu_xml">
+<code class="descclassname">menu_utilities.menu_parser.</code><code class="descname">parse_menu_xml</code><span class="sig-paren">(</span><em>menu_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/menu_parser.html#parse_menu_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.menu_parser.parse_menu_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the filepath of a menu xml file, this function parses
+the file and returns a dictionary of menu string-&gt; menu items</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>menu_file</strong> (<em>Str</em>) – -Filepath of menu configuration xml</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Rtn:</dt>
+<dd><dl class="first last docutils">
+<dt>dict menu_dict:</dt>
+<dd>-Mapping from the name of the menu item to a MenuItem</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-menu_utilities.order_tracker">
+<span id="menu-utilities-order-tracker-module"></span><h2>menu_utilities.order_tracker module<a class="headerlink" href="#module-menu_utilities.order_tracker" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="menu_utilities.order_tracker.OrderTracker">
+<em class="property">class </em><code class="descclassname">menu_utilities.order_tracker.</code><code class="descname">OrderTracker</code><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Responsible for tracking orders and designing instruction queue.</p>
+<dl class="method">
+<dt id="menu_utilities.order_tracker.OrderTracker.get_cup_ids">
+<code class="descname">get_cup_ids</code><span class="sig-paren">(</span><em>order_num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker.get_cup_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker.get_cup_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an order number, returns the occupied cup_slots for orders</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>order_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Id of the order</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Rtns:</dt>
+<dd><dl class="first last docutils">
+<dt>list of ints cup_ids</dt>
+<dd>a list of cup slots the order it using</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="menu_utilities.order_tracker.OrderTracker.get_instruction">
+<code class="descname">get_instruction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker.get_instruction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker.get_instruction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides an instruction</p>
+<dl class="docutils">
+<dt>Mods:</dt>
+<dd>Removes first element from instr_queue</dd>
+<dt>Rtn:</dt>
+<dd><dl class="first last docutils">
+<dt>tuple (order_num, idx, cup_id, instr_id, instr) instruction:</dt>
+<dd>Note: if an active instruction is being processed or
+instruction queue is empty, None is returned</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="menu_utilities.order_tracker.OrderTracker.is_order_complete">
+<code class="descname">is_order_complete</code><span class="sig-paren">(</span><em>order_num=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker.is_order_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker.is_order_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if order is complete. If order is complete return order_num.
+If order_num is not specfied, checks all orders and returns the
+first found complete orders. If no order is complete, returns 0</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>order_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – default = None
+Checking if a specific order is complete. If the order
+is complete, the order_num is returned. If not, 0 is returned</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Rtn:</dt>
+<dd><dl class="first last docutils">
+<dt>tuple(int, list) order_details:</dt>
+<dd>Tuple where the first element is a positive num representing
+the completed order or 0 if no order is complete. The second
+element is a list of cup_ids corresponding to the orders</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="menu_utilities.order_tracker.OrderTracker.parse_new_orders">
+<code class="descname">parse_new_orders</code><span class="sig-paren">(</span><em>new_orders</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker.parse_new_orders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker.parse_new_orders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds new orders to backlog and triggers processing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>of tuples</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a>) – A list of tuples where the first element is a postive order
+number, the second elem is a list of drink names, and
+the final elem is a corresponding list of recipes</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Mods:</dt>
+<dd><dl class="first last docutils">
+<dt>list of tuples (order_num, order_idx, recipe) backlog:</dt>
+<dd>Adds new orders to backlog</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="menu_utilities.order_tracker.OrderTracker.verify_result">
+<code class="descname">verify_result</code><span class="sig-paren">(</span><em>instr_id</em>, <em>result</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/menu_utilities/order_tracker.html#OrderTracker.verify_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#menu_utilities.order_tracker.OrderTracker.verify_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirms the completion of an instruction</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>instr_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Id of the instruction</li>
+<li><strong>result</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether the instruction completed successfully or not</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-menu_utilities">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-menu_utilities" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table of Contents</h3>
+          <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">src</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">menu_utilities package</a></li>
+</ul>
+</li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="modules.html" title="src"
+              >previous</a> |
+            <a href="py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/menu_utilities.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021RKS &lt;ryanking-shepard@u.northwestern.edu&gt; Marshall Johnson &lt;marshalljohnson2022@u.northwestern.edu&gt; Matt Short &lt;matthewshort2025@u.northwestern.edu&gt; Eric Codrea &lt;EricCodrea2022@u.northwestern.edu&gt; Pranav Kaarthik &lt;kaarthikpranav97@gmail.com&gt;.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

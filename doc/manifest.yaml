@@ -1,0 +1,39 @@
+actions: []
+authors: RKS <ryanking-shepard@u.northwestern.edu>, Marshall Johnson <marshalljohnson2022@u.northwestern.edu>,
+  Matt Short <matthewshort2025@u.northwestern.edu>, Eric Codrea <EricCodrea2022@u.northwestern.edu>,
+  Pranav Kaarthik <kaarthikpranav97@gmail.com>
+brief: ''
+bugtracker: ''
+depends:
+- rviz
+- geometry_msgs
+- std_msgs
+- rostest
+- catkin
+- usb_cam
+- apriltag_ros
+- realsense2_camera
+- moveit_msgs
+- panda_moveit_config
+- rospy
+- message_generation
+- message_runtime
+- image_proc
+description: Enables the Franka robot to create and serve a variety of drinks.
+license: TODO
+maintainers: RKS <ryanking-shepard@u.northwestern.edu>, Marshall Johnson <marshalljohnson2022@u.northwestern.edu>,
+  Matt Short <matthewshort2025@u.northwestern.edu>, Eric Codrea <ericcodrea2022@u.northwestern.edu>,
+  Pranav Kaarthik <kaarthikpranav97@gmail.com>
+msgs:
+- CupDetection
+package_type: package
+repo_url: ''
+srvs:
+- VerifyInstr
+- PourInstr
+- Order
+- SetInstr
+- ConfirmOrder
+- Refresh
+- InventoryUpdate
+url: ''
