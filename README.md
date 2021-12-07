@@ -74,6 +74,16 @@ This package contains:
 
 ## High Level Concepts and Overall System Architecture
 
+The process loop of the robot is as follows:
+1. Take an order for the customer and prepare to execute the order.
+2. Survey the workspace and update the planning scene with the location of each drink
+3. Execute the grab service - the grab service involves the robot resetting to a default location where it has good access to the entire workspace to be used, a cartesian motion to bring the robotic arm to the first ingredient with the grippers in place to grasp the bottle, and finally a grasping action that allows for the bottle to be lightly grasped without squeezing too hard.
+4. Execute the pour service - the pour service involves the robot executing a cartesian motion to bring the ingredient to a spot offset from the coasters location where it can be squeezed and pour an ingredient into each cup, a joint angle command to tilt the end effector with the bottle which allows the pour to be directly into the cup, a squeeze action which uses force control to squeeze the grippers and finally a reverse of the joint angle command previously sent to bring the gripper horizontal with the table.
+5. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
+6. Repeat 3-5 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
+
+The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
+
 ## **Dependencies and Installation**
 ```
 # run this command line tool while in a custom workspace
@@ -84,14 +94,14 @@ vcs import < mixotics.rosinstall
 ## *ROS Dependencies and Libraries Used*
 This package was developed and tested in ros-noetic. 
 
- *pyrealsesnse2* - Library to use and run the Intel Realsense D435i depth camera.
- *MoveIt* - The motion planning library used to provide the trajectories that enabled the robot to perform its tasks.
- *libfranka/ franka_ros* - This library allowed  low-level control of the Emika Franka Panda robot and control of the gripper.
+1. *pyrealsesnse2* - Library to use and run the Intel Realsense D435i depth camera.
+2. *MoveIt* - The motion planning library used to provide the trajectories that enabled the robot to perform its tasks.
+3. *libfranka/ franka_ros* - This library allowed  low-level control of the Emika Franka Panda robot and control of the gripper. 
 
 
 
 ### *Python Dependencies*
-All code for this package was developed and test in Python 3. TODO  
+All code for this package was developed and test in Python 3.
 
 ## **Execution**
 ```
