@@ -1,5 +1,7 @@
 <launch>
     <include file="$(find ros_vosk)/launch/ros_vosk.launch"/>
     <node pkg="final_project_mixotics" type="voice" name="voice"/>
+    <node name="order_handler" pkg="final_project_mixotics" type="order_handler"/>
+    <node name="mover" pkg="final_project_mixotics" type="mover"/>
     <rosparam command="load" file="$(find final_project_mixotics)/config/menu_choices.yaml" />
 </launch>
