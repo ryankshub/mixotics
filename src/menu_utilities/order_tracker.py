@@ -303,7 +303,10 @@ class OrderTracker:
 
         Args:
             int order_num:
-                Positive number for 
+                Id of the order
+        Rtns:
+            list of ints cup_ids
+                a list of cup slots the order it using
         """
         order_info = self._status.get(order_num, None)
         if order_info is None:
