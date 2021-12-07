@@ -1,8 +1,145 @@
 #!/usr/bin/env python3
-
 """ 
+Node to process voice commands from user and output list of menu items.
+Service proxy takes menu items and processes in order_handler.
 
+PUBLISHERS:
+  + pub (String) ~ publishes to tts/phrase to give robot voice
 
+SUBSCRIBERS:
+  + sub (String) ~ subscribes to speech recognition topic to process audio
+
+SERVICES:
++ process_order (Order) ~ proxy for process_order service 
 
 """
 
+import rospy
+from std_msgs.msg import String
+from enum import Enum, auto
+import math
+from final_project_mixotics.srv import Order
+
+
+class State(Enum):
+    """
+    Specifies the state of the control loop (either idle, request, listen or confirm)
+    """
+    IDLE = auto()
+    REQUEST = auto()
+    LISTEN = auto()
+    CONFIRM = auto()
+
+class Voice:
+
+    def __init__(self):
+        """Initializes necessary parmeters for Voice object."""
+
+        self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
+        self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
+        self.process_order = rospy.ServiceProxy('process_order', Order)
+
+        self.order_msg = Order()
+
+        self.voice_text = ''
+        self.menu = rospy.get_param('/drinks')
+
+        self.state = State.IDLE
+        self.wake = ['sir', 'mix']
+
+        # Main loop runs in a timer with frequency specified in launch file
+        self.tmr = rospy.Timer(rospy.Duration(1), self.main_loop)
+        
+    def subscriber_callback(self, s):
+        """Callback for speech recognition subscriber."""
+        self.voice_text = s.data
+
+    def process_text(self):
+        """Takes voice data string and splits into words. Returns list of
+        words that are valid menu items.
+        """
+        split_text = self.voice_text.split(' ')
+        order = [s for s in split_text if s in self.menu]
+        return order
+
+    def order_responses (self, order):
+        """Generates response messages based on user input. Changes state accordingly."""
+
+        if (len(order) > 0) and (len(order) <= 4):
+            msg = f'To confirm, you ordered the following: {", ".join(order)}. Is that correct?'
+            self.state = State.CONFIRM
+            return msg
+        
+        elif len(order) > 4:
+            msg = f'The order limit is 4 items, please place your order again.'
+            self.state = State.REQUEST
+            return msg
+
+        else:
+            msg = f'Sorry, I did not catch your order. Please try again.'
+            self.state = State.REQUEST
+            return msg
+
+
+    def wake_check(self):
+        """Checks voice input for wake command."""
+        return [d for d in self.voice_text.split(' ') if d in self.wake] == self.wake
+
+    def confirm_check(self):
+        """State machine to take action based on user voice input."""
+        if 'yes' in self.voice_text:
+            msg = 'Thank you for your order. We are processing it now.'
+            self.state = State.IDLE
+            self.order_msg.orders = self.order
+            self.process_order(self.order)
+            return msg
+            
+        elif 'no' in self.voice_text:
+            msg = "I'm sorry... My mistake. I won't get it wrong again. Could you please repeat your order?"
+            self.state = State.REQUEST
+            return msg
+        else:
+            msg = f"I didn't quite catch that. Did you order the following?: {', '.join(self.order)}."
+            self.state = State.CONFIRM
+            return msg
+
+            
+
+    
+    def main_loop(self, event):
+        """ 
+        The main control loop timer callback (checks state)
+
+        Args:
+          event - A rospy.Timer event
+        """
+        
+        if self.state == State.IDLE:
+            if self.wake_check():
+                self.state = State.REQUEST
+        elif self.state == State.REQUEST:
+            self.pub.publish("What would you like to drink?")
+            rospy.sleep(8)
+            self.state = State.LISTEN
+        elif self.state == State.LISTEN:
+            self.order = self.process_text()
+            message = self.order_responses(self.order)
+            self.pub.publish(message)
+            rospy.sleep(8)
+        elif self.state == State.CONFIRM:
+            self.pub.publish(self.confirm_check())
+            rospy.sleep(8)
+        rospy.loginfo(self.state)
+
+
+def main():
+    """ The main() function. """
+    rospy.init_node('voice')
+    v = Voice()
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass

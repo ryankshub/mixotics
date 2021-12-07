@@ -196,14 +196,14 @@ class Vision:
                 else:
                     filled = False
                 cv2.drawContours(dilate, c_cup, -1, (0, 255, 0), 8)
-                self.show_image(dilate, f'Clipped - {k}')
+                # self.show_image(dilate, f'Clipped - {k}')
             else: 
                 filled = False
 
             cup_status[self.color_to_cup[k]] = filled
             
         self.cup_array.append(cup_status)
-        rospy.logerr(self.cup_array)
+        # rospy.logerr(self.cup_array)
 
 
         if len(self.cup_array) > 10:
@@ -355,10 +355,11 @@ def main():
     rospy.init_node('vision')
     v = Vision()
     while not rospy.is_shutdown():
-        pos_dict = v.get_position(v.color_image, v.depth_image, v.intrinsics)
-        if pos_dict and v.color:
-            for k, val in pos_dict.items():
-                v.broadcast(val, k)
+        if v.color:
+            pos_dict = v.get_position(v.color_image, v.depth_image, v.intrinsics)
+            if pos_dict:
+                for k, val in pos_dict.items():
+                    v.broadcast(val, k)
         v.cup_detection(v.color_image)
         v.r.sleep()
 
