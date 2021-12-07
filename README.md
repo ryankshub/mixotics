@@ -7,8 +7,10 @@ Authors and Maintainers:
 - **Eric Codrea**
 - **Pranav Kaarthik**  
 
+
 ## **Description**
 This package enables the Franka robot to create and serve a variety of drinks.
+
 
 ## **User Guide**
 
@@ -31,7 +33,20 @@ This package enables the Franka robot to create and serve a variety of drinks.
 11. We can now start the franka_ros controller. To do so, run `roslaunch franka_control franka_control.launch robot_ip:=robot.franka.de`. Keep this terminal open - if this process stops running, it needs to be restarted to be able to run the robot.
 12. Now that the connection to the robot is setup and the franka_ros controllers are running, run the launchfile `roslaunch panda_moveit_config panda_control_moveit_rviz.launch launch_franka_control:=false robot_ip:=robot.franka.de` to run moveit and rviz.
 13. In another terminal, run `roslaunch final_project_mixotics mixotics.launch` to run the `fixed_tag`, `vision`, `order_handler`, `update_scene` and `mover` nodes.
-14. The robot can now fulfil an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
+14. The robot can now fulfill an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
+
+
+## High Level Concepts and Overall System Architecture
+
+The process loop of the robot is as follows:
+1. Take an order for the customer and prepare to execute the order.
+2. Survey the workspace and update the planning scene with the location of each drink
+3. Execute the grab service - the grab service involves the robot resetting to a default location where it has good access to the entire workspace to be used, a cartesian motion to bring the robotic arm to the first ingredient with the grippers in place to grasp the bottle, and finally a grasping action that allows for the bottle to be lightly grasped without squeezing too hard.
+4. Execute the pour service - the pour service involves the robot executing a cartesian motion to bring the ingredient to a spot offset from the coasters location where it can be squeezed and pour an ingredient into each cup, a joint angle command to tilt the end effector with the bottle which allows the pour to be directly into the cup, a squeeze action which uses force control to squeeze the grippers and finally a reverse of the joint angle command previously sent to bring the gripper horizontal with the table.
+5. Execute the stock service - the stock service involves the robot executing a cartesian trajectory to return the robotic arm to the initial drink location, and a gripper position command to open the grippers gently and deposit the ingredient back at its starting location.
+6. Repeat 3-5 in order to fulfil each drink that the customer requires. Multi-ingredient drinks require these steps to be executed multiple times for each ingredient.
+
+The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
 
 
 ## Contents
@@ -126,8 +141,8 @@ pip3 install opencv-python
 ## *Physical Equipment*
 1. Emika Franka Panda robot
 2. Intel Realsense D435i depth sensing camera
-3. 4 oz. washbottles (3x)
-4. 9 oz. solo cups (4x)
+3. [4 oz. washbottles](https://www.grainger.com/product/LAB-SAFETY-SUPPLY-Wash-Bottle-4-oz-Labware-Capacity-6FAV7) (3x)
+4. [9 oz. solo cups](https://www.amazon.com/Disposable-Party-Plastic-Cups-Pack/dp/B092FY8VSJ/ref=sr_1_22?keywords=solo%2Bcups&qid=1638291607&sr=8-22&th=1) (4x)
 5. Lasercut acrylic cup flight
 6. 3D printed Apriltag Coasters (3x for washbottles and 4x for flight)
 7. Safety Spillage Bins
