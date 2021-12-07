@@ -43,6 +43,7 @@ This package contains:
     3. `vision`: detects spaces occupied by cups in the custom drink holder
     4. `mover`: defines services for robot movements (i.e., grab, pour and set) using moveit planning and action libraries
     5. `order_handler`: processes orders from the user and generates a list of instructions used by the mover node
+    6. `voice`: processes verbal orders from the user and uses service proxy to integrate with order_handler. Integration to move robot using verbal orders is still in development. Verbal order processing alone is functional.
 - config:
     1. `menu.xml`: configuration file for the menu including the recipe instructions for each drink
     2. `objects.yaml`: contains list of names for ingredients, coasters and tables (optional) as well as associated object dimensions
