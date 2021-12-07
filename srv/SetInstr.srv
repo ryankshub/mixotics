@@ -1,5 +1,5 @@
-# Request/Response for grab and release service
-# Tells robot which ingredient to grab/release
+# Request/Response for grab and stock service
+# Tells robot which ingredient to grab/stock
 # Enum values can be found in python_pkg menu_utilities.enum_defs
 
 uint16 instr_id        # Id of the instruction

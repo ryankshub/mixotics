@@ -1,4 +1,4 @@
-# Request/Response for pouring service
+# Request/Response for pour service
 # Tells the robot where to pour ingredient and how much to pour
 
 uint16 instr_id  # Id of the instruction
