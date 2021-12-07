@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
-
 """ 
+Node to process voice commands from user and output list of menu items.
+Service proxy takes menu items and processes in order_handler.
+
+PUBLISHERS:
+  + pub (String) ~ publishes to tts/phrase to give robot voice
+
+SUBSCRIBERS:
+  + sub (String) ~ subscribes to speech recognition topic to process audio
+
+SERVICES:
++ process_order (Order) ~ proxy for process_order service 
 
 """
+
 import rospy
 from std_msgs.msg import String
 from enum import Enum, auto
@@ -22,6 +33,8 @@ class State(Enum):
 class Voice:
 
     def __init__(self):
+        """Initializes necessary parmeters for Voice object."""
+
         self.sub = rospy.Subscriber('speech_recognition/final_result', String, self.subscriber_callback)
         self.pub = rospy.Publisher('tts/phrase', String, queue_size=10)
         self.process_order = rospy.ServiceProxy('process_order', Order)
@@ -38,14 +51,20 @@ class Voice:
         self.tmr = rospy.Timer(rospy.Duration(1), self.main_loop)
         
     def subscriber_callback(self, s):
+        """Callback for speech recognition subscriber."""
         self.voice_text = s.data
 
     def process_text(self):
+        """Takes voice data string and splits into words. Returns list of
+        words that are valid menu items.
+        """
         split_text = self.voice_text.split(' ')
         order = [s for s in split_text if s in self.menu]
         return order
 
     def order_responses (self, order):
+        """Generates response messages based on user input. Changes state accordingly."""
+
         if (len(order) > 0) and (len(order) <= 4):
             msg = f'To confirm, you ordered the following: {", ".join(order)}. Is that correct?'
             self.state = State.CONFIRM
@@ -63,9 +82,11 @@ class Voice:
 
 
     def wake_check(self):
+        """Checks voice input for wake command."""
         return [d for d in self.voice_text.split(' ') if d in self.wake] == self.wake
 
     def confirm_check(self):
+        """State machine to take action based on user voice input."""
         if 'yes' in self.voice_text:
             msg = 'Thank you for your order. We are processing it now.'
             self.state = State.IDLE
