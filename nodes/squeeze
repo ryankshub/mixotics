@@ -3,6 +3,9 @@ import rospy
 import actionlib
 from franka_gripper.msg import MoveGoal, MoveAction, GraspGoal, GraspAction, GraspEpsilon
 
+'''This is a testing node to test the squeeze action of the gripper. This node uses the GraspAction action.
+'''
+
 if __name__ == '__main__':
     rospy.init_node('grasp')
     client = actionlib.SimpleActionClient('/franka_gripper/grasp', GraspAction)

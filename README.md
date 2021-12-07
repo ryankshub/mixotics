@@ -43,6 +43,7 @@ This package contains:
     3. `vision`: detects spaces occupied by cups in the custom drink holder
     4. `mover`: defines services for robot movements (i.e., grab, pour and set) using moveit planning and action libraries
     5. `order_handler`: processes orders from the user and generates a list of instructions used by the mover node
+    6. `voice`: processes verbal orders from the user and uses service proxy to integrate with order_handler. Integration to move robot using verbal orders is still in development. Verbal order processing alone is functional.
 - config:
     1. `menu.xml`: configuration file for the menu including the recipe instructions for each drink
     2. `objects.yaml`: contains list of names for ingredients, coasters and tables (optional) as well as associated object dimensions
@@ -84,11 +85,6 @@ The process loop of the robot is as follows:
 
 The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
 
-## **Dependencies and Installation**
-```
-# run this command line tool while in a custom workspace
-vcs import < mixotics.rosinstall
-```
 
 
 ## *ROS Dependencies and Libraries Used*
@@ -103,9 +99,3 @@ This package was developed and tested in ros-noetic.
 ### *Python Dependencies*
 All code for this package was developed and test in Python 3.
 
-## **Execution**
-```
-ssh stuff
-roslaunch panda_moveit_config panda_control_moveit_rviz.launch robot_ip:=robot.franka.de launch_franka_control:=false
-roslaunch final_project_mixotics mixotics.launch
-```
