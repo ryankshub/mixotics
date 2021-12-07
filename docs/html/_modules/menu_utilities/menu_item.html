@@ -1,0 +1,182 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>menu_utilities.menu_item &#8212; final_project_mixotics 0.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../../index.html">final_project_mixotics 0.0.0 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for menu_utilities.menu_item</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!usr/bin/env python3</span>
+<span class="c1">#Python file contain definition for MenuItem</span>
+<span class="c1">#RKS</span>
+
+<span class="c1"># Project imports</span>
+<span class="kn">from</span> <span class="nn">menu_utilities.enum_defs</span> <span class="k">import</span> <span class="n">InstrEnum</span><span class="p">,</span> <span class="n">StoreRoomEnum</span>
+<span class="c1"># Python imports</span>
+
+<span class="c1"># 3rd party imports</span>
+
+<div class="viewcode-block" id="MenuItem"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.menu_item.MenuItem">[docs]</a><span class="k">class</span> <span class="nc">MenuItem</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Representation of a menu item the Franka robot can make.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ingredients</span><span class="p">,</span> <span class="n">instructions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor of the MenuItem class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            str name:</span>
+<span class="sd">                ~name of the menu item</span>
+<span class="sd">            list ingredients:</span>
+<span class="sd">                ~list of ingredients needed to make the menu items. The list </span>
+<span class="sd">                should contain enum from the StoreRoomEnum</span>
+<span class="sd">            list instructions:</span>
+<span class="sd">                ~Recipe of the menu item. The recipe should contain </span>
+<span class="sd">                enums from the InstrEnum</span>
+<span class="sd">        </span>
+<span class="sd">        Raise:</span>
+<span class="sd">            RuntimeError:</span>
+<span class="sd">                Raises a Runtime Error if an ill-defined ingredient or </span>
+<span class="sd">                instruction is found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ingredients</span> <span class="o">=</span> <span class="n">ingredients</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recipe</span> <span class="o">=</span> <span class="n">instructions</span>
+
+        <span class="c1">## Check ingredients</span>
+        <span class="n">false_ingredients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ingredient</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ingredients</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ingredient</span><span class="p">,</span> <span class="n">StoreRoomEnum</span><span class="p">):</span>
+                <span class="n">false_ingredients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ingredient</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">false_ingredients</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">err_string</span> <span class="o">=</span> <span class="n">f</span><span class="s2">&quot;Unknown ingredients found: </span><span class="si">{false_ingredients}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_string</span><span class="p">)</span>
+
+
+        <span class="c1">## Check instructions</span>
+        <span class="n">false_instructions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recipe</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instruction</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">InstrEnum</span><span class="p">):</span>
+                <span class="n">false_instructions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instruction</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">instruction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">GRAB</span> <span class="ow">or</span> <span class="n">instruction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">instruction</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ingredients</span><span class="p">:</span>
+                    <span class="n">err_string</span> <span class="o">=</span> <span class="n">f</span><span class="s2">&quot;Ingredient </span><span class="si">{instruction[1]}</span><span class="s2"> is missing&quot;</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">false_instructions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">err_string</span> <span class="o">=</span> <span class="n">f</span><span class="s2">&quot;Unknown instructions found: </span><span class="si">{false_instructions}</span><span class="s2">&quot;</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_string</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get name of the item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Userbase cannot change the name of the menu item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;WARN: Menu item </span><span class="si">{self._name}</span><span class="s2"> cannot have it&#39;s name changed&quot;</span><span class="p">)</span>
+        <span class="k">pass</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ingredients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the ingredients for the menu item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ingredients</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the recipe for the menu item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recipe</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table of Contents</h3>
+          <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021RKS &lt;ryanking-shepard@u.northwestern.edu&gt; Marshall Johnson &lt;marshalljohnson2022@u.northwestern.edu&gt; Matt Short &lt;matthewshort2025@u.northwestern.edu&gt; Eric Codrea &lt;EricCodrea2022@u.northwestern.edu&gt; Pranav Kaarthik &lt;kaarthikpranav97@gmail.com&gt;.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,455 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>menu_utilities.order_tracker &#8212; final_project_mixotics 0.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../../index.html">final_project_mixotics 0.0.0 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for menu_utilities.order_tracker</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1">#Order Tracker class file</span>
+<span class="c1">#RKS</span>
+
+<span class="c1"># Project imports</span>
+<span class="kn">from</span> <span class="nn">menu_utilities.enum_defs</span> <span class="k">import</span> <span class="n">InstrEnum</span>
+
+<span class="c1"># Python imports</span>
+
+<span class="c1"># 3rd-party imports</span>
+
+
+<div class="viewcode-block" id="OrderTracker"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker">[docs]</a><span class="k">class</span> <span class="nc">OrderTracker</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Responsible for tracking orders and designing instruction queue.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor for ObjectTracker</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Constants</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NUM_CUP_SLOTS</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MAX_INSTRS</span> <span class="o">=</span> <span class="mi">65535</span>
+        
+        <span class="c1"># Counters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_instr_counter</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Queues</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Dictionaries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># Tracks order&#39;s completeness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avail_slots</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_NUM_CUP_SLOTS</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_occup_slots</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Placeholder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">=</span> <span class="kc">None</span>
+        
+    <span class="c1">#### PRIVATE FUNCTION ####</span>
+    <span class="c1">#### DO NOT USE THESE DIRECTLY ####</span>
+
+    <span class="k">def</span> <span class="nf">_grab_slot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab an open slot for an order</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        int cup_id: </span>
+<span class="sd">            Positive id of the assigned slot. </span>
+<span class="sd">            If no slots are available, 0 is returned </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_avail_slots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rtn_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avail_slots</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_occup_slots</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">rtn_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rtn_id</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">rtn_id</span>
+    
+
+    <span class="k">def</span> <span class="nf">_release_slot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cup_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Release an occupied slot upon order completion</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        int cup_id:</span>
+<span class="sd">            Positive id of the released slot</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_occup_slots</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">cup_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avail_slots</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cup_id</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes a batch of new_orders. The process assigns order to </span>
+<span class="sd">        available cups, breaks down recipes into instructions, and added </span>
+<span class="sd">        new instructions either to active_queue or backlog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_instr_batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># While there are open slots, process</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_avail_slots</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Get top drink in log and unpack values</span>
+            <span class="n">drink</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">order_num</span> <span class="o">=</span> <span class="n">drink</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">drink</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">recipe</span> <span class="o">=</span> <span class="n">drink</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="c1"># Set instr_id</span>
+            <span class="n">instr_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instr_counter</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instr_counter</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_counter</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MAX_INSTRS</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="c1"># Grab open cup slot</span>
+            <span class="n">cup_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grab_slot</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">[</span><span class="n">order_num</span><span class="p">][</span><span class="n">idx</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">cup_id</span>
+            <span class="c1"># Split recipe for instruction processing</span>
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">recipe</span><span class="p">:</span>
+                <span class="n">instr</span> <span class="o">=</span> <span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">cup_id</span><span class="p">,</span> <span class="n">instr_id</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+                <span class="n">new_instr_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+        
+        <span class="c1"># Check if safe to integrate new instrs </span>
+        <span class="c1"># or just append them</span>
+        <span class="n">modify_bool</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> \
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">GRAB</span> <span class="ow">or</span> \
+             <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">POUR</span> <span class="ow">or</span> \
+             <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">DELIVER</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_instr_batch</span><span class="p">(</span><span class="n">new_instr_batch</span><span class="p">,</span> <span class="n">modify_bool</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_parse_instr_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instr_batch</span><span class="p">,</span> <span class="n">modify</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates internal instruction queue by integrating new batch. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list of instr instr_batch:</span>
+<span class="sd">                List of new instructions to be integrated</span>
+
+<span class="sd">            bool modify: default False</span>
+<span class="sd">                If true, the new instructions will be integrated into current </span>
+<span class="sd">                queue for effciency. </span>
+<span class="sd">                If false, new instructions will be append to the end</span>
+<span class="sd">        Mods:</span>
+<span class="sd">            Modifies the internal list of instructions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">processing</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">modify</span><span class="p">:</span>
+            <span class="n">processing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="o">+</span> <span class="n">instr_batch</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">processing</span> <span class="o">=</span> <span class="n">instr_batch</span>
+
+        <span class="c1"># Process instructions</span>
+        <span class="k">while</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">processing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">instr</span> <span class="o">=</span> <span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># Integrate Grabs</span>
+            <span class="k">if</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">GRAB</span><span class="p">:</span>
+                <span class="c1">#First, add instruction</span>
+                <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+                <span class="c1">#Second Find all grabs of same type and add there pours</span>
+                <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">while</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">processing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">instr</span><span class="p">:</span>
+                        <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">elif</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+                        <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">False</span>
+
+                    <span class="k">if</span> <span class="n">grabbing</span><span class="p">:</span>
+                        <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">temp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">processing</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            
+            <span class="c1">#Integrate Pours</span>
+            <span class="k">elif</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">POUR</span><span class="p">:</span>
+                <span class="c1">#First, add until you get to RELEASE</span>
+                <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+                <span class="k">while</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">POUR</span><span class="p">:</span>
+                    <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="c1"># Next craft &#39;GRAB&#39; and get all pours</span>
+                <span class="c1"># We&#39;ll use the ingredient from the RELEASE CMD</span>
+                <span class="n">faux_grab</span> <span class="o">=</span> <span class="p">(</span><span class="n">InstrEnum</span><span class="o">.</span><span class="n">GRAB</span><span class="p">,</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="c1"># Find all grabs of same type and add there pours</span>
+                <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">while</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">processing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">faux_grab</span><span class="p">:</span>
+                        <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">elif</span> <span class="n">processing</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+                        <span class="n">grabbing</span> <span class="o">=</span> <span class="kc">False</span>
+
+                    <span class="k">if</span> <span class="n">grabbing</span><span class="p">:</span>
+                        <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">temp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">processing</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            
+            <span class="c1">#Integrate Releases</span>
+            <span class="k">elif</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">processed</span><span class="p">[</span><span class="n">step</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">RELEASE</span><span class="p">:</span>
+                        <span class="c1"># Check if instruction is the same, if so, don&#39;t add</span>
+                        <span class="k">if</span> <span class="n">processed</span><span class="p">[</span><span class="n">step</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="k">break</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># raise hell</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{instr[-1][0]}</span><span class="s2"> follows release instead of grab&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">processed</span><span class="p">[</span><span class="n">step</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">GRAB</span><span class="p">:</span>
+                        <span class="c1"># Check if instruction pairs with release</span>
+                        <span class="c1"># If so, add release</span>
+                        <span class="k">if</span> <span class="n">processed</span><span class="p">[</span><span class="n">step</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+                            <span class="k">break</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># raise hell</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{instr[-1][0]}</span><span class="s2"> releases different ingredient from grabbed&quot;</span><span class="p">)</span>
+            
+            <span class="c1">#Integrate Delivery</span>
+            <span class="k">elif</span> <span class="n">instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">DELIVER</span><span class="p">:</span>
+                <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instr</span><span class="p">)</span>
+            
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">#Robot does not support this instr</span>
+                <span class="c1">#Filter it out</span>
+                <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="n">modify</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span> <span class="o">=</span> <span class="n">processed</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span> <span class="o">+=</span> <span class="n">processed</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+
+    <span class="c1">#### PUBLIC FUNCTIONS ####</span>
+    <span class="c1">#### HAVE AT THEE ####</span>
+
+<div class="viewcode-block" id="OrderTracker.parse_new_orders"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker.parse_new_orders">[docs]</a>    <span class="k">def</span> <span class="nf">parse_new_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_orders</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds new orders to backlog and triggers processing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            list of tuples (int, [drink_names], [recipes]) new_orders:</span>
+<span class="sd">                A list of tuples where the first element is a postive order </span>
+<span class="sd">                number, the second elem is a list of drink names, and </span>
+<span class="sd">                the final elem is a corresponding list of recipes</span>
+<span class="sd">        Mods:</span>
+<span class="sd">            list of tuples (order_num, order_idx, recipe) backlog:</span>
+<span class="sd">                Adds new orders to backlog</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Add new orders to backlog</span>
+        <span class="n">parsed_orders</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">new_orders</span><span class="p">:</span>
+            <span class="c1"># Split tuples</span>
+            <span class="n">order_num</span> <span class="o">=</span> <span class="n">order</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">order_names</span> <span class="o">=</span> <span class="n">order</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">order_recipes</span> <span class="o">=</span> <span class="n">order</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="c1"># Set up status</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">[</span><span class="n">order_num</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">order_names</span><span class="p">):</span>
+                <span class="c1"># Log drink into tracker</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">[</span><span class="n">order_num</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">[</span><span class="n">order_num</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="n">parsed_orders</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">order_num</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">order_recipes</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span> <span class="o">+=</span> <span class="n">parsed_orders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_orders</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="OrderTracker.get_instruction"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker.get_instruction">[docs]</a>    <span class="k">def</span> <span class="nf">get_instruction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides an instruction</span>
+
+<span class="sd">        Mods:</span>
+<span class="sd">            Removes first element from instr_queue</span>
+
+<span class="sd">        Rtn:</span>
+<span class="sd">            tuple (order_num, idx, cup_id, instr_id, instr) instruction:</span>
+<span class="sd">                Note: if an active instruction is being processed or </span>
+<span class="sd">                instruction queue is empty, None is returned</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="OrderTracker.verify_result"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker.verify_result">[docs]</a>    <span class="k">def</span> <span class="nf">verify_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instr_id</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Confirms the completion of an instruction</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            int instr_id:</span>
+<span class="sd">                Id of the instruction</span>
+<span class="sd">            bool result:</span>
+<span class="sd">                Whether the instruction completed successfully or not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">instr_id</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">order_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">InstrEnum</span><span class="o">.</span><span class="n">DELIVER</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">[</span><span class="n">order_num</span><span class="p">][</span><span class="n">idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Clean object of bad order</span>
+                <span class="n">tainted_order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">order_num</span><span class="p">)</span>
+                <span class="c1"># Release cups</span>
+                <span class="n">tainted_cups_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tainted_order</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">cup_id</span> <span class="ow">in</span> <span class="n">tainted_cups_ids</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_release_slot</span><span class="p">(</span><span class="n">cup_id</span><span class="p">)</span>
+                <span class="c1"># Clear instruction queue</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instr_queue</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">order_num</span><span class="p">]</span>
+                <span class="c1"># Clear backlog</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backlog</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">order_num</span><span class="p">]</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">_active_instr</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="OrderTracker.get_cup_ids"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker.get_cup_ids">[docs]</a>    <span class="k">def</span> <span class="nf">get_cup_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_num</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an order number, returns the occupied cup_slots for orders</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            int order_num:</span>
+<span class="sd">                Id of the order</span>
+<span class="sd">        Rtns:</span>
+<span class="sd">            list of ints cup_ids</span>
+<span class="sd">                a list of cup slots the order it using</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">order_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">order_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="c1"># We only care about cup_ids being taken, i.e. non-zero</span>
+        <span class="n">cup_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">order_info</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cup_ids</span></div>
+
+
+<div class="viewcode-block" id="OrderTracker.is_order_complete"><a class="viewcode-back" href="../../menu_utilities.html#menu_utilities.order_tracker.OrderTracker.is_order_complete">[docs]</a>    <span class="k">def</span> <span class="nf">is_order_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_num</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if order is complete. If order is complete return order_num.</span>
+<span class="sd">        If order_num is not specfied, checks all orders and returns the </span>
+<span class="sd">        first found complete orders. If no order is complete, returns 0</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            int order_num: default = None</span>
+<span class="sd">                Checking if a specific order is complete. If the order</span>
+<span class="sd">                is complete, the order_num is returned. If not, 0 is returned</span>
+<span class="sd">        </span>
+<span class="sd">        Rtn:</span>
+<span class="sd">            tuple(int, list) order_details:</span>
+<span class="sd">                Tuple where the first element is a positive num representing </span>
+<span class="sd">                the completed order or 0 if no order is complete. The second </span>
+<span class="sd">                element is a list of cup_ids corresponding to the orders</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">order_num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Grab status and cup_ips for order</span>
+            <span class="n">bools</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+            <span class="n">drink_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+            <span class="n">cup_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+            <span class="c1"># If all cups in order are finished</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">bools</span><span class="p">):</span>
+                <span class="c1"># Clear tracker, release slots and process orders</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">order_num</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">cup_id</span> <span class="ow">in</span> <span class="n">cup_ids</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_release_slot</span><span class="p">(</span><span class="n">cup_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_process_orders</span><span class="p">()</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">order_num</span><span class="p">,</span> <span class="n">drink_names</span><span class="p">,</span> <span class="n">cup_ids</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Check each and every order</span>
+            <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">bools</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+                <span class="n">drink_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+                <span class="n">cup_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[(</span><span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;NUL&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])]</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">bools</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">cup_id</span> <span class="ow">in</span> <span class="n">cup_ids</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_release_slot</span><span class="p">(</span><span class="n">cup_id</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">drink_names</span><span class="p">,</span> <span class="n">cup_ids</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="p">[])</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table of Contents</h3>
+          <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+          </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="../../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021RKS &lt;ryanking-shepard@u.northwestern.edu&gt; Marshall Johnson &lt;marshalljohnson2022@u.northwestern.edu&gt; Matt Short &lt;matthewshort2025@u.northwestern.edu&gt; Eric Codrea &lt;EricCodrea2022@u.northwestern.edu&gt; Pranav Kaarthik &lt;kaarthikpranav97@gmail.com&gt;.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
