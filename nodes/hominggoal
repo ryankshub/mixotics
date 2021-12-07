@@ -3,6 +3,9 @@ import rospy
 import actionlib
 from franka_gripper.msg import HomingAction, HomingGoal
 
+'''This is a  node to uses the HomingAction action and recalibrate the grippers on the robot.
+'''
+
 if __name__ == '__main__':
     rospy.init_node('Franka_gripper_homing_action')
     client = actionlib.SimpleActionClient('/franka_gripper/homing', HomingAction)
