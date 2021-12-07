@@ -99,3 +99,14 @@ This package was developed and tested in ros-noetic.
 ### *Python Dependencies*
 All code for this package was developed and test in Python 3.
 
+
+### *Physical Equipment*
+1. Emika Franka Panda robot
+2. Intel Realsense D435i depth sensing camera
+3. 4 oz. washbottles (3x)
+4. 9 oz. solo cups (4x)
+5. Lasercut acrylic cup flight
+6. 3D printed Apriltag Coasters (3x for washbottles and 4x for flight)
+7. Safety Spillage Bins
+8. Tables
+
