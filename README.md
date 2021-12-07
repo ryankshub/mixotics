@@ -100,7 +100,7 @@ This package was developed and tested in ros-noetic.
 All code for this package was developed and test in Python 3.
 
 
-### *Physical Equipment*
+## *Physical Equipment*
 1. Emika Franka Panda robot
 2. Intel Realsense D435i depth sensing camera
 3. 4 oz. washbottles (3x)
