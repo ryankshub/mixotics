@@ -3,6 +3,9 @@ import rospy
 import actionlib
 from franka_gripper.msg import MoveGoal, MoveAction
 
+'''This is a testing node to test the opening action of the gripper. This node uses the MoveAction action.
+'''
+
 if __name__ == '__main__':
     rospy.init_node('grippergoal')
     client = actionlib.SimpleActionClient('/franka_gripper/move', MoveAction)
