@@ -84,11 +84,6 @@ The process loop of the robot is as follows:
 
 The order handler further takes into account whether or not the robot successfully completed each of the prior steps and if an error is received, stops the robot.
 
-## **Dependencies and Installation**
-```
-# run this command line tool while in a custom workspace
-vcs import < mixotics.rosinstall
-```
 
 
 ## *ROS Dependencies and Libraries Used*
@@ -103,9 +98,3 @@ This package was developed and tested in ros-noetic.
 ### *Python Dependencies*
 All code for this package was developed and test in Python 3.
 
-## **Execution**
-```
-ssh stuff
-roslaunch panda_moveit_config panda_control_moveit_rviz.launch robot_ip:=robot.franka.de launch_franka_control:=false
-roslaunch final_project_mixotics mixotics.launch
-```
