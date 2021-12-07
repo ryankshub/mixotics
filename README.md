@@ -10,7 +10,7 @@ Authors and Maintainers:
 ## **Description**
 This package enables the Franka robot to create and serve a variety of drinks.
 
-## **User Guide **
+## **User Guide**
 
 1. Download the `mixotics.rosinstall` file into the /src directory of the catkin workspace. This file will install the ros dependencies required to run this project.
 2. Use `wstool init` and `wstool merge mixotics.rosinstall` to initialize the workspace and merge the rosinstall file with the workspace. Run `wstool update` to ensure latest versions of all packages are installed.
