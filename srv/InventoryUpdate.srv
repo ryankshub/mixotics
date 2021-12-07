@@ -2,9 +2,10 @@
 # Given an ingredient enum and whether the ingredient is available
 
 # Enum definitions: This should match definitions in menu_utilities/enum_defs.StoreRoomEnum
-uint16 WATER=0
-uint16 LEMON=1
-uint16 TEA=2
+uint16 WATER = 1
+uint16 SUGAR = 2
+uint16 LEMON = 3
+uint16 TEA = 4
 
 uint16 ingredient
 bool available # True if inventory has ingredient
