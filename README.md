@@ -31,9 +31,8 @@ This package enables the Franka robot to create and serve a variety of drinks.
     a. In the first terminal, run `roscore`.
     b. In the second terminal, run `export ROS_MASTER_URI=http://$(hostname):11311` where hostname is the name of the users computer. After that, run `ssh -oSendEnv=ROS_MASTER_URI student@station`.
 11. We can now start the franka_ros controller. To do so, run `roslaunch franka_control franka_control.launch robot_ip:=robot.franka.de`. Keep this terminal open - if this process stops running, it needs to be restarted to be able to run the robot.
-12. Now that the connection to the robot is setup and the franka_ros controllers are running, run the launchfile `roslaunch panda_moveit_config panda_control_moveit_rviz.launch launch_franka_control:=false robot_ip:=robot.franka.de` to run moveit and rviz.
-13. In another terminal, run `roslaunch final_project_mixotics mixotics.launch` to run the `fixed_tag`, `vision`, `order_handler`, `update_scene` and `mover` nodes.
-14. The robot can now fulfill an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
+12. Now that the connection to the robot is setup and the franka_ros controllers are running, run `roslaunch final_project_mixotics mixotics.launch` to run the `fixed_tag`, `vision`, `order_handler`, `update_scene` and `mover` nodes along with `panda_control_moveit_rviz.launch` to run moveit and rviz.
+13. The robot can now fulfill an order! Run `rosservice call /process_order {"orders= 'water', 'water', 'lemonade'"}` to have Sir Mix-a-lot make a drink! The acceptable drink commands are "water", "lemonade", "iced tea"
 
 
 ## Contents
