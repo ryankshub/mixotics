@@ -146,6 +146,15 @@ class Vision:
         return depth
 
     def calc_cup_avg(self, cup_array):
+        """Calculated rolling average for the last 10 image frames of cup
+        slot data. True if filled, false if not. Reduces noise.
+        
+        :param cup_array: list of boolean values indicating if slot is occupied
+                            True indicates occupied slot.
+
+        :returns cup_status: boolean of averaged cup_array values over last 10 frames
+
+        """
         count = [0, 0, 0, 0]
         for i, status in enumerate(cup_array):
             if i >=6:
@@ -164,7 +173,14 @@ class Vision:
         return cup_status
 
     def cup_detection(self, color_image):
+        """Uses CV to determine whether a cup slot is filled or not.
+        
+        :param color_image: color_image array
 
+        Publishes array of boolean values indicating the current filled/empty 
+        status of cup slots. If a cup is present, the corresponding value in 
+        the array returned is True. Otherwise, it is False.
+        """
         try:
             hsv_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2HSV)
         except:
